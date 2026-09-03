@@ -1,0 +1,206 @@
+# ============================================================
+# ANTARBODH - Git Ignore
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. DATASETS
+# ------------------------------------------------------------
+
+# Raw ocean datasets
+data/raw/
+
+# Intermediate processed datasets
+data/interim/
+
+# Final processed datasets
+data/processed/
+
+# Validation datasets (ARGO / INCOIS)
+data/validation/
+
+# Scientific data formats
+*.nc
+*.nc4
+*.h5
+*.hdf5
+*.grib
+*.grib2
+*.zarr/
+
+# Compressed dataset archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+
+
+# ------------------------------------------------------------
+# 2. MACHINE LEARNING OUTPUTS
+# ------------------------------------------------------------
+
+# Model checkpoints / weights
+outputs/checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+
+# Large experiment outputs
+outputs/models/
+outputs/experiments/
+
+
+# ------------------------------------------------------------
+# 3. PYTHON
+# ------------------------------------------------------------
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Compiled extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Package metadata
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+
+# ------------------------------------------------------------
+# 4. VIRTUAL ENVIRONMENTS
+# ------------------------------------------------------------
+
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+
+
+# ------------------------------------------------------------
+# 5. JUPYTER NOTEBOOKS
+# ------------------------------------------------------------
+
+.ipynb_checkpoints/
+
+# Jupyter temporary files
+*.nbconvert.ipynb
+
+
+# ------------------------------------------------------------
+# 6. IDE / EDITOR FILES
+# ------------------------------------------------------------
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+
+# ------------------------------------------------------------
+# 7. LOGS
+# ------------------------------------------------------------
+
+*.log
+logs/
+
+
+# ------------------------------------------------------------
+# 8. TEMPORARY FILES
+# ------------------------------------------------------------
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+
+# ------------------------------------------------------------
+# 9. SECRETS / CREDENTIALS
+# ------------------------------------------------------------
+
+# Environment variables / API credentials
+.env
+.env.*
+!.env.example
+
+# API keys / tokens
+secrets/
+credentials/
+*.pem
+*.key
+
+
+# ------------------------------------------------------------
+# 10. LARGE GENERATED FILES
+# ------------------------------------------------------------
+
+# Large NumPy / ML arrays
+*.npy
+*.npz
+
+# Parquet datasets
+*.parquet
+
+# Pickled datasets/models
+*.pkl
+*.pickle
+
+# Feather
+*.feather
+
+
+# ------------------------------------------------------------
+# 11. GENERATED FIGURES / REPORTS
+# ------------------------------------------------------------
+
+# Keep the figures folder itself in Git, but ignore
+# accidentally generated bulk outputs.
+outputs/figures/generated/
+outputs/reports/
+
+
+# ------------------------------------------------------------
+# 12. CACHE DIRECTORIES
+# ------------------------------------------------------------
+
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

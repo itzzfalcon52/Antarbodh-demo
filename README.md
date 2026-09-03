@@ -25,7 +25,7 @@ The repository is currently intended to remain **private** during development.
 ## Clone
 
 ```bash
-git clone https://github.com/<YOUR-USERNAME>/antarbodh.git
+git clone https://github.com/itzzfalcon52/antarbodh.git
 cd antarbodh
 ```
 

@@ -1,0 +1,139 @@
+# ============================================================
+# ANTARBODH - Python Environment
+# AI-Powered Subsurface Ocean Intelligence
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. DATA ACCESS
+# ------------------------------------------------------------
+
+# Copernicus Marine data access and subsetting
+copernicusmarine
+
+# HTTP / API requests
+requests
+urllib3
+
+
+# ------------------------------------------------------------
+# 2. SCIENTIFIC COMPUTING
+# ------------------------------------------------------------
+
+numpy
+scipy
+
+# Tabular data manipulation
+pandas
+
+# NetCDF / multidimensional scientific datasets
+xarray
+netCDF4
+h5netcdf
+
+# Zarr support for chunked cloud/local datasets
+zarr
+fsspec
+
+
+# ------------------------------------------------------------
+# 3. OCEAN / GEOSPATIAL DATA PROCESSING
+# ------------------------------------------------------------
+
+# Coordinate reference systems and projections
+pyproj
+
+# Geospatial vector data
+geopandas
+shapely
+
+# Regridding / interpolation
+xESMF
+
+
+# ------------------------------------------------------------
+# 4. QUALITY CONTROL / DATA VALIDATION
+# ------------------------------------------------------------
+
+# Dataset schema / validation
+pydantic
+
+# YAML configuration files
+PyYAML
+
+
+# ------------------------------------------------------------
+# 5. VISUALIZATION / EDA
+# ------------------------------------------------------------
+
+matplotlib
+seaborn
+
+# Interactive plotting
+plotly
+
+# Optional geographic map visualization
+cartopy
+
+
+# ------------------------------------------------------------
+# 6. JUPYTER / DEVELOPMENT
+# ------------------------------------------------------------
+
+jupyter
+jupyterlab
+ipykernel
+notebook
+
+
+# ------------------------------------------------------------
+# 7. MACHINE LEARNING
+# ------------------------------------------------------------
+
+scikit-learn
+
+
+# ------------------------------------------------------------
+# 8. DEEP LEARNING
+# ------------------------------------------------------------
+
+# PyTorch
+torch
+torchvision
+
+# TensorBoard experiment tracking
+tensorboard
+
+
+# ------------------------------------------------------------
+# 9. MODEL / DATA UTILITIES
+# ------------------------------------------------------------
+
+tqdm
+joblib
+
+
+# ------------------------------------------------------------
+# 10. EXPERIMENT CONFIGURATION / LOGGING
+# ------------------------------------------------------------
+
+python-dotenv
+
+
+# ------------------------------------------------------------
+# 11. TESTING / CODE QUALITY
+# ------------------------------------------------------------
+
+pytest
+pytest-cov
+
+# Code formatting / linting
+black
+ruff
+
+
+# ------------------------------------------------------------
+# 12. OPTIONAL PERFORMANCE / LARGE DATA
+# ------------------------------------------------------------
+
+dask
+distributed

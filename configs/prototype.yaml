@@ -1,0 +1,16 @@
+region:
+  min_lat: 5
+  max_lat: 20
+  min_lon: 80
+  max_lon: 100
+
+time:
+  start: "2020-01-01"
+  end: "2020-01-03"
+
+glorys:
+  dataset_id: "cmems_mod_glo_phy_my_0.083deg_P1D-m"
+  variable: "thetao"
+  min_depth: 0
+  max_depth: 1100
+  output_filename: "glorys_bob_test"

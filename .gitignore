@@ -194,6 +194,7 @@ credentials/
 # accidentally generated bulk outputs.
 outputs/figures/generated/
 outputs/reports/
+copernicus_catalogue.txt
 
 
 # ------------------------------------------------------------

@@ -25,8 +25,8 @@ The repository is currently intended to remain **private** during development.
 ## Clone
 
 ```bash
-git clone https://github.com/itzzfalcon52/antarbodh.git
-cd antarbodh
+git clone https://github.com/itzzfalcon52/Antarbodh-demo.git
+cd Antarbodh-demo
 ```
 
 ## Create a virtual environment

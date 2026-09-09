@@ -24,7 +24,7 @@ region:
 
 time:
   start: "2020-01-01"
-  end: "2020-01-01"
+  end: "2020-01-31"
 
   # Initial testing:
   # start: "2020-01-01"

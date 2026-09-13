@@ -36,20 +36,27 @@ def regrid_surface_variables(
     print("Regridding surface variables to uniform 0.25° grid...")
 
     sst_common = qc_vars["sst"].interp(latitude=common_lat, longitude=common_lon)
-    sss_asc_common = qc_vars["sss_asc"].interp(latitude=common_lat, longitude=common_lon)
-    sss_desc_common = qc_vars["sss_desc"].interp(latitude=common_lat, longitude=common_lon)
 
-    # Combine ascending and descending SSS observations
-    asc_valid = sss_asc_common.notnull()
-    desc_valid = sss_desc_common.notnull()
-    sss_common = xr.where(
-        asc_valid & desc_valid,
-        (sss_asc_common + sss_desc_common) / 2.0,
-        xr.where(asc_valid, sss_asc_common, sss_desc_common),
-    )
-    sss_common.name = "SSS"
-    sss_common.attrs["long_name"] = "Combined practical sea surface salinity"
-    sss_common.attrs["units"] = "0.001"
+    if "sss" in qc_vars:
+        sss_common = qc_vars["sss"].interp(latitude=common_lat, longitude=common_lon)
+        sss_common.name = "SSS"
+        sss_common.attrs["long_name"] = "Sea surface salinity"
+        sss_common.attrs["units"] = "0.001"
+    else:
+        sss_asc_common = qc_vars["sss_asc"].interp(latitude=common_lat, longitude=common_lon)
+        sss_desc_common = qc_vars["sss_desc"].interp(latitude=common_lat, longitude=common_lon)
+
+        # Combine ascending and descending SSS observations
+        asc_valid = sss_asc_common.notnull()
+        desc_valid = sss_desc_common.notnull()
+        sss_common = xr.where(
+            asc_valid & desc_valid,
+            (sss_asc_common + sss_desc_common) / 2.0,
+            xr.where(asc_valid, sss_asc_common, sss_desc_common),
+        )
+        sss_common.name = "SSS"
+        sss_common.attrs["long_name"] = "Combined practical sea surface salinity"
+        sss_common.attrs["units"] = "0.001"
 
     ssh_common = qc_vars["ssh"].interp(latitude=common_lat, longitude=common_lon)
     current_u_common = qc_vars["current_u"].interp(latitude=common_lat, longitude=common_lon)

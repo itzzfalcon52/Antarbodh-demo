@@ -80,49 +80,24 @@ glorys:
 
 
 sst:
-  product_id: "SST_GLO_PHY_L3S_MY_010_039"
-
-  dataset_id: "cmems_obs-sst_glo_phy_my_l3s_P1D-m"
-
-  # IMPORTANT:
-  # Confirm the exact variable name with:
-  # copernicusmarine describe
+  product_id: "SST_GLO_SST_L4_REP_OBSERVATIONS_010_011"
+  dataset_id: "METOFFICE-GLO-SST-L4-REP-OBS-SST"
   variables:
-    -  "sea_surface_temperature"
-
+    - "analysed_sst"
   output_filename: "sst_bob"
-
   output_directory: "data/raw/sst"
-
   temporal_resolution: "daily"
-  native_resolution: 0.1
-
-  # Native product resolution is finer than 0.25 degrees.
-  # Regrid during preprocessing.
-
-
+  native_resolution: 0.05
 
 sss:
-  product_id: "MULTIOBS_GLO_PHY_SSS_L3_MYNRT_015_014"
-
-  # The product currently exposes separate ascending and
-  # descending daily datasets.
-  dataset_id_ascending: "cmems_obs-mob_glo_phy-sss_mynrt_smos-asc_P1D"
-
-  dataset_id_descending: "cmems_obs-mob_glo_phy-sss_mynrt_smos-des_P1D"
-
-  # Confirm exact variable name with:
-  # copernicusmarine describe
+  product_id: "MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013"
+  dataset_id: "cmems_obs-mob_glo_phy-sss_my_multi_P1D"
   variables:
-    - "Sea_Surface_Salinity"
-
+    - "sos"
   output_filename: "sss_bob"
-
   output_directory: "data/raw/sss"
-
   temporal_resolution: "daily"
-
-  native_resolution: 0.2
+  native_resolution: 0.25
 
 
 
@@ -170,14 +145,14 @@ currents:
 
 
 winds:
-  product_id: "WIND_GLO_PHY_L3_NRT_012_002"
-  dataset_id: "cmems_obs-wind_glo_phy_nrt_l3-metopb-ascat-asc-0.25deg_P1D-i"
+  product_id: "WIND_GLO_PHY_L4_MY_012_006"
+  dataset_id: "cmems_obs-wind_glo_phy_my_l4_0.125deg_PT1H"
   variables:
     - "eastward_wind"
     - "northward_wind"
   output_filename: "winds_bob"
   output_directory: "data/raw/winds"
-  temporal_resolution: "daily"
+  temporal_resolution: "hourly"
   target_resolution: 0.25
 
 

@@ -6,13 +6,14 @@ import sys
 import yaml
 
 
-CONFIG_PATH = Path("configs/prototype.yaml")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+CONFIG_PATH = PROJECT_ROOT / "configs" / "prototype.yaml"
 
 
 def load_config():
     if not CONFIG_PATH.exists():
         raise FileNotFoundError(
-            f"Configuration not found: {CONFIG_PATH}. Run this script from the repository root."
+            f"Configuration not found: {CONFIG_PATH}."
         )
     with CONFIG_PATH.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -31,9 +32,12 @@ def run_subset(
     output_filename,
     minimum_depth=None,
     maximum_depth=None,
+    overwrite=True,
 ):
     """Run copernicusmarine subset using the CLI."""
     outdir = Path(output_directory)
+    if not outdir.is_absolute():
+        outdir = PROJECT_ROOT / outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
     cmd = [
@@ -61,6 +65,8 @@ def run_subset(
         cmd += ["--minimum-depth", str(minimum_depth)]
     if maximum_depth is not None:
         cmd += ["--maximum-depth", str(maximum_depth)]
+    if overwrite:
+        cmd += ["--overwrite"]
 
     print("Running:")
     print(" ".join(cmd))

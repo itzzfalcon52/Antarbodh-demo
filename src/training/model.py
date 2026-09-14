@@ -5,7 +5,7 @@ Architecture
 A multi-scale encoder-decoder CNN that maps surface observations to
 subsurface temperature profiles:
 
-    Input:  (B, 13, H, W)  — 13 surface channels
+    Input:  (B, 14, H, W)  — 14 surface channels (7 features + 7 masks)
     Output: (B, 15, H, W)  — 15 depth levels
 
 The encoder extracts spatial features at increasing receptive fields.
@@ -46,7 +46,7 @@ class AntarBodhCNN(nn.Module):
     Parameters
     ----------
     in_channels : int
-        Number of surface input channels (default 13).
+        Number of surface input channels (default 14).
     out_depths : int
         Number of target depth levels (default 15).
     base_filters : int
@@ -56,7 +56,7 @@ class AntarBodhCNN(nn.Module):
 
     def __init__(
         self,
-        in_channels: int = 13,
+        in_channels: int = 14,
         out_depths: int = 15,
         base_filters: int = 64,
     ):
@@ -89,7 +89,7 @@ class AntarBodhCNN(nn.Module):
         Parameters
         ----------
         x : torch.Tensor
-            Input surface observations, shape ``(B, 7, H, W)``.
+            Input surface observations, shape ``(B, 14, H, W)``.
 
         Returns
         -------
@@ -123,12 +123,12 @@ class AntarBodhCNNLite(nn.Module):
     Parameters
     ----------
     in_channels : int
-        Number of surface input channels (default 7).
+        Number of surface input channels (default 14).
     out_depths : int
         Number of target depth levels (default 15).
     """
 
-    def __init__(self, in_channels: int = 7, out_depths: int = 15):
+    def __init__(self, in_channels: int = 14, out_depths: int = 15):
         super().__init__()
         self.net = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),

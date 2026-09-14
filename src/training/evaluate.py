@@ -73,12 +73,19 @@ def evaluate(
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     cfg = ckpt.get("config", {})
 
+    # Verify data contract from checkpoint
+    if "data_contract" in ckpt:
+        expected_channels = ckpt["data_contract"].get("input_channels", 14)
+    else:
+        print("Warning: No data_contract found in checkpoint. Assuming 14 channels.")
+        expected_channels = 14
+
     # Build model
     model_type = cfg.get("model", "cnn")
     if model_type == "cnn_lite":
-        model = AntarBodhCNNLite()
+        model = AntarBodhCNNLite(in_channels=expected_channels)
     else:
-        model = AntarBodhCNN(base_filters=cfg.get("base_filters", 64))
+        model = AntarBodhCNN(in_channels=expected_channels, base_filters=cfg.get("base_filters", 64))
 
     model.load_state_dict(ckpt["model_state_dict"])
     model = model.to(device)
@@ -86,12 +93,15 @@ def evaluate(
 
     # Load test data
     test_ds = AntarBodhDataset(
-        inputs_path=f"{data_dir}/inputs.nc",
-        targets_path=f"{data_dir}/targets.nc",
-        masks_path=None,
-        split="test",
+        nc_path=Path(data_dir) / "test.nc",
         patch_size=None,  # Full spatial field for evaluation
     )
+    
+    if test_ds.X.shape[1] != expected_channels:
+        raise ValueError(
+            f"Checkpoint expects {expected_channels} channels, "
+            f"but test.nc has {test_ds.X.shape[1]} channels."
+        )
     test_loader = DataLoader(
         test_ds,
         batch_size=batch_size,

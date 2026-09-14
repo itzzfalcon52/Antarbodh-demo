@@ -148,8 +148,8 @@ def masked_correlation(
     p_mean = p.mean()
     t_mean = t.mean()
     cov = ((p - p_mean) * (t - t_mean)).mean()
-    p_std = p.std()
-    t_std = t.std()
+    p_std = p.std(unbiased=False)
+    t_std = t.std(unbiased=False)
 
     if p_std == 0 or t_std == 0:
         return float("nan")

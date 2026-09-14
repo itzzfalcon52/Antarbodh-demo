@@ -18,110 +18,89 @@ import xarray as xr
 
 
 class AntarBodhDataset(Dataset):
-    """PyTorch Dataset for subsurface temperature reconstruction.
+    """PyTorch Dataset for ANTARBODH subsurface temperature reconstruction.
+
+    Expects a preprocessed NetCDF file containing:
+      X       (time, channel, lat, lon) - 14 channels
+      Y       (time, depth, lat, lon)   - 15 depths
+      Y_mask  (time, depth, lat, lon)   - binary mask for valid Y cells
 
     Parameters
     ----------
-    inputs_path : str or Path
-        Path to ``inputs.nc`` — shape ``(time, channel=7, lat, lon)``.
-    targets_path : str or Path
-        Path to ``targets.nc`` — shape ``(time, depth=15, lat, lon)``.
-    masks_path : str or Path, optional
-        Path to ``masks.nc`` — observation validity masks.
-    split : str
-        One of ``"train"``, ``"val"``, ``"test"``, ``"all"``.
-    train_years : tuple
-        Year range for training (inclusive), default ``(2020, 2023)``.
-    val_years : tuple
-        Year range for validation, default ``(2024, 2024)``.
-    test_years : tuple
-        Year range for testing, default ``(2025, 2025)``.
+    nc_path : str or Path
+        Path to the pre-split NetCDF file (e.g. `train.nc`, `val.nc`).
     patch_size : int or None
         If given, extract random spatial patches of this size during
-        ``__getitem__``.  If ``None``, return the full spatial field.
+        ``__getitem__``. If ``None``, return the full spatial field.
     """
 
     def __init__(
         self,
-        inputs_path: str | Path = "data/processed/inputs.nc",
-        targets_path: str | Path = "data/processed/targets.nc",
-        masks_path: str | Path | None = None,
-        split: str = "train",
-        train_years: tuple[int, int] = (2020, 2023),
-        val_years: tuple[int, int] = (2024, 2024),
-        test_years: tuple[int, int] = (2025, 2025),
+        nc_path: str | Path,
         patch_size: int | None = None,
-        channel_indices: list[int] | None = None,
     ):
-        """channel_indices: indices of input channels to keep (default: first 7 physical channels)."""
-
         super().__init__()
+        self.nc_path = Path(nc_path)
         self.patch_size = patch_size
-        self.split = split
-        # Default: keep all 13 channels from the L4 pipeline
-        self.channel_indices = channel_indices if channel_indices is not None else list(range(13))
+        
+        if not self.nc_path.exists():
+            raise FileNotFoundError(f"Dataset file not found: {self.nc_path}")
 
-        # Load data
-        X = xr.open_dataarray(inputs_path)
-        Y = xr.open_dataarray(targets_path)
+        # Load data fully into memory for fast training
+        print(f"Loading {self.nc_path.name} into memory...")
+        ds = xr.open_dataset(self.nc_path).load()
 
-        # Normalise dim order: L4 pipeline writes (channel, time, lat, lon)
-        # but the rest of this class expects (time, channel, lat, lon).
-        if X.dims[0] != "time":
-            X = X.transpose("time", ...)
+        if "X" not in ds or "Y" not in ds or "Y_mask" not in ds:
+            raise ValueError("Dataset must contain X, Y, and Y_mask variables.")
 
-        # Apply temporal split
-        if split != "all":
-            year_range = {
-                "train": train_years,
-                "val":   val_years,
-                "test":  test_years,
-            }[split]
-            time_mask = (
-                (X.time.dt.year >= year_range[0])
-                & (X.time.dt.year <= year_range[1])
-            )
-            X = X.sel(time=time_mask)
-            Y = Y.sel(time=time_mask)
-
-        # Convert to numpy arrays (materialise from disk)
-        self.X = X.values.astype(np.float32)  # (T, C, H, W)
-        self.Y = Y.values.astype(np.float32)  # (T, D, H, W)
-
-        # Select requested input channels
-        self.X = self.X[:, self.channel_indices, :, :]
-
-        # Load masks if available
-        self.masks = None
-        if masks_path is not None and Path(masks_path).exists():
-            masks_ds = xr.open_dataset(masks_path)
-            # Stack mask variables into a single array
-            mask_vars = [v for v in masks_ds.data_vars]
-            if mask_vars:
-                mask_list = []
-                for v in mask_vars:
-                    m = masks_ds[v]
-                    if split != "all":
-                        m = m.sel(time=time_mask)
-                    mask_list.append(m.values.astype(np.float32))
-                self.masks = np.stack(mask_list, axis=1)  # (T, M, H, W)
-
-        # Replace any remaining NaN in targets with 0 and create target mask
-        self.target_valid = np.isfinite(self.Y).astype(np.float32)
-        self.X = np.nan_to_num(self.X, nan=0.0)
-        self.Y = np.nan_to_num(self.Y, nan=0.0)
-
+        # Assign to numpy arrays
+        self.X = ds["X"].values.astype(np.float32)       # (T, 14, H, W)
+        self.Y = ds["Y"].values.astype(np.float32)       # (T, 15, H, W)
+        self.Y_mask = ds["Y_mask"].values.astype(np.float32) # (T, 15, H, W)
+        
         self.n_times = self.X.shape[0]
         self.height = self.X.shape[2]
         self.width = self.X.shape[3]
+
+        # Explicit Contract Validation
+        self._validate_contract()
+        ds.close()
+
+    def _validate_contract(self):
+        """Validates that the dataset adheres strictly to the ANTARBODH scientific contract."""
+        # 1. Dimensionality
+        assert self.X.ndim == 4, f"X must be 4D (time, channel, lat, lon), got {self.X.ndim}D"
+        assert self.Y.ndim == 4, f"Y must be 4D (time, depth, lat, lon), got {self.Y.ndim}D"
+        assert self.Y_mask.ndim == 4, f"Y_mask must be 4D, got {self.Y_mask.ndim}D"
+        
+        # 2. Shape matching
+        assert self.X.shape[0] == self.Y.shape[0] == self.Y_mask.shape[0], "Time dimensions do not match"
+        assert self.X.shape[2:] == self.Y.shape[2:] == self.Y_mask.shape[2:], "Spatial dimensions do not match"
+        
+        # 3. Channel Counts
+        assert self.X.shape[1] == 14, f"X must have exactly 14 channels, got {self.X.shape[1]}"
+        assert self.Y.shape[1] == 15, f"Y must have exactly 15 depth target levels, got {self.Y.shape[1]}"
+        
+        # 4. Binary Mask Validation
+        unique_mask_vals = np.unique(self.Y_mask)
+        assert set(unique_mask_vals).issubset({0.0, 1.0}), f"Y_mask must be binary (0 or 1). Found: {unique_mask_vals}"
+        
+        # 5. NaN Audit: Data should already be scientifically preprocessed and zero-filled.
+        #    The Dataset shouldn't be responsible for guessing how to handle NaNs.
+        if not np.isfinite(self.X).all():
+            raise ValueError("X contains NaN/Inf values! Preprocessing should have handled this.")
+        if not np.isfinite(self.Y).all():
+            raise ValueError("Y contains NaN/Inf values! Preprocessing should have handled this.")
+        if not np.isfinite(self.Y_mask).all():
+            raise ValueError("Y_mask contains NaN/Inf values! Preprocessing should have handled this.")
 
     def __len__(self) -> int:
         return self.n_times
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        x = self.X[idx]  # (C, H, W)
-        y = self.Y[idx]  # (D, H, W)
-        y_mask = self.target_valid[idx]  # (D, H, W)
+        x = self.X[idx]       # (14, H, W)
+        y = self.Y[idx]       # (15, H, W)
+        y_mask = self.Y_mask[idx] # (15, H, W)
 
         # Optional spatial patch extraction
         if self.patch_size is not None and self.patch_size < min(self.height, self.width):
@@ -134,50 +113,8 @@ class AntarBodhDataset(Dataset):
             y = y[:, h_start:h_end, w_start:w_end]
             y_mask = y_mask[:, h_start:h_end, w_start:w_end]
 
-        sample = {
+        return {
             "input":       torch.from_numpy(x),
             "target":      torch.from_numpy(y),
             "target_mask": torch.from_numpy(y_mask),
         }
-
-        if self.masks is not None:
-            m = self.masks[idx]
-            if self.patch_size is not None and self.patch_size < min(self.height, self.width):
-                m = m[:, h_start:h_end, w_start:w_end]
-            sample["input_mask"] = torch.from_numpy(m)
-
-        return sample
-
-
-def create_dataloaders(
-    inputs_path: str = "data/processed/inputs.nc",
-    targets_path: str = "data/processed/targets.nc",
-    masks_path: str = "data/processed/masks.nc",
-    batch_size: int = 8,
-    patch_size: int | None = 32,
-    num_workers: int = 0,
-) -> dict[str, torch.utils.data.DataLoader]:
-    """Create train/val/test DataLoaders.
-
-    Returns
-    -------
-    dict
-        ``{"train": ..., "val": ..., "test": ...}`` DataLoaders.
-    """
-    loaders = {}
-    for split in ("train", "val", "test"):
-        ds = AntarBodhDataset(
-            inputs_path=inputs_path,
-            targets_path=targets_path,
-            masks_path=masks_path,
-            split=split,
-            patch_size=patch_size,
-        )
-        loaders[split] = torch.utils.data.DataLoader(
-            ds,
-            batch_size=batch_size,
-            shuffle=(split == "train"),
-            num_workers=num_workers,
-            pin_memory=True,
-        )
-    return loaders

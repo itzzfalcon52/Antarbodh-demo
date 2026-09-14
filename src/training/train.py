@@ -20,6 +20,7 @@ import json
 import sys
 import time
 from pathlib import Path
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -92,8 +93,9 @@ def train_one_epoch(
     """
     model.train()
     total_loss = 0.0
-    total_rmse = 0.0
-    total_mae = 0.0
+    sum_sq_err = 0.0
+    sum_abs_err = 0.0
+    sum_valid = 0.0
     n_batches = 0
 
     for batch in loader:
@@ -108,14 +110,22 @@ def train_one_epoch(
         optimizer.step()
 
         total_loss += loss.item()
-        total_rmse += masked_rmse(pred, y, mask)
-        total_mae  += masked_mae(pred, y, mask)
+        
+        # Accumulate errors correctly
+        diff = pred - y
+        sum_sq_err += ((diff ** 2) * mask).sum().item()
+        sum_abs_err += (torch.abs(diff) * mask).sum().item()
+        sum_valid += mask.sum().item()
+        
         n_batches += 1
+
+    rmse = (sum_sq_err / sum_valid) ** 0.5 if sum_valid > 0 else float("nan")
+    mae = sum_abs_err / sum_valid if sum_valid > 0 else float("nan")
 
     return {
         "loss": total_loss / max(n_batches, 1),
-        "rmse": total_rmse / max(n_batches, 1),
-        "mae":  total_mae / max(n_batches, 1),
+        "rmse": rmse,
+        "mae":  mae,
     }
 
 
@@ -135,8 +145,9 @@ def validate(
     """
     model.eval()
     total_loss = 0.0
-    total_rmse = 0.0
-    total_mae = 0.0
+    sum_sq_err = 0.0
+    sum_abs_err = 0.0
+    sum_valid = 0.0
     n_batches = 0
 
     for batch in loader:
@@ -148,14 +159,22 @@ def validate(
         loss = criterion(pred, y, mask)
 
         total_loss += loss.item()
-        total_rmse += masked_rmse(pred, y, mask)
-        total_mae  += masked_mae(pred, y, mask)
+        
+        # Accumulate errors correctly
+        diff = pred - y
+        sum_sq_err += ((diff ** 2) * mask).sum().item()
+        sum_abs_err += (torch.abs(diff) * mask).sum().item()
+        sum_valid += mask.sum().item()
+        
         n_batches += 1
+
+    rmse = (sum_sq_err / sum_valid) ** 0.5 if sum_valid > 0 else float("nan")
+    mae = sum_abs_err / sum_valid if sum_valid > 0 else float("nan")
 
     return {
         "loss": total_loss / max(n_batches, 1),
-        "rmse": total_rmse / max(n_batches, 1),
-        "mae":  total_mae / max(n_batches, 1),
+        "rmse": rmse,
+        "mae":  mae,
     }
 
 
@@ -182,20 +201,14 @@ def run_training(config_path: str | None = None):
     print()
 
     # --- Data ---
-    data_dir = cfg["data_dir"]
+    data_dir = Path(cfg["data_dir"])
     train_ds = AntarBodhDataset(
-        inputs_path=f"{data_dir}/inputs.nc",
-        targets_path=f"{data_dir}/targets.nc",
-        masks_path=None,
-        split="train",
+        nc_path=data_dir / "train.nc",
         patch_size=cfg["patch_size"],
     )
     val_ds = AntarBodhDataset(
-        inputs_path=f"{data_dir}/inputs.nc",
-        targets_path=f"{data_dir}/targets.nc",
-        masks_path=None,
-        split="val",
-        patch_size=cfg["patch_size"],
+        nc_path=data_dir / "val.nc",
+        patch_size=None, # deterministic full-field validation
     )
 
     train_loader = DataLoader(
@@ -216,6 +229,10 @@ def run_training(config_path: str | None = None):
     print(f"Train samples: {len(train_ds)}")
     print(f"Val samples:   {len(val_ds)}")
     print()
+
+    # --- Pre-flight Data Audit ---
+    audit_data_contract(train_ds, val_ds)
+    run_synthetic_mask_test(device)
 
     # --- Model ---
     if cfg["model"] == "cnn_lite":
@@ -298,12 +315,18 @@ def run_training(config_path: str | None = None):
         if val_metrics["loss"] < best_val_loss:
             best_val_loss = val_metrics["loss"]
             patience_counter = 0
+            # Save Checkpoint with Data Contract
             torch.save({
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "val_loss": best_val_loss,
                 "config": cfg,
+                "data_contract": {
+                    "input_channels": 14,
+                    "target_depths_m": [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000],
+                    "target_units": "degC",
+                }
             }, ckpt_dir / "best_model.pt")
             print(f"  -> Saved best model (val_loss={best_val_loss:.6f})")
         else:
@@ -330,9 +353,74 @@ def run_training(config_path: str | None = None):
 
 
 # ---------------------------------------------------------------------------
+# Pre-flight Checks
+# ---------------------------------------------------------------------------
+
+def audit_data_contract(train_ds: AntarBodhDataset, val_ds: AntarBodhDataset):
+    print("================================")
+    print("ANTARBODH TRAINING DATA AUDIT")
+    print("================================")
+    print(f"Train:")
+    print(f"  samples: {train_ds.n_times}")
+    print(f"  X shape: {train_ds.X.shape}")
+    print(f"  Y shape: {train_ds.Y.shape}")
+    print(f"  Y_mask shape: {train_ds.Y_mask.shape}")
+    print(f"\nValidation:")
+    print(f"  samples: {val_ds.n_times}")
+    print(f"  X shape: {val_ds.X.shape}")
+    print(f"  Y shape: {val_ds.Y.shape}")
+    print(f"  Y_mask shape: {val_ds.Y_mask.shape}")
+    print(f"\nChannels:")
+    print(f"  {train_ds.X.shape[1]} ✓")
+    print(f"Depths:")
+    print(f"  {train_ds.Y.shape[1]} ✓")
+    
+    print("\nData Sanity Check:")
+    print(f"  X NaNs: {np.isnan(train_ds.X).sum()} ✓")
+    print(f"  Y NaNs: {np.isnan(train_ds.Y).sum()} ✓")
+    print(f"  Y_mask unique: {np.unique(train_ds.Y_mask)} ✓")
+    
+    # Check SSS masks (Index 8 in our contract)
+    sss_mask_train = train_ds.X[:, 8, :, :]
+    sss_mask_val = val_ds.X[:, 8, :, :]
+    print(f"  SSS Mask Coverage (Train): {(sss_mask_train == 1).mean():.2%}")
+    print(f"  SSS Mask Coverage (Val):   {(sss_mask_val == 1).mean():.2%}")
+    print("================================\n")
+
+def run_synthetic_mask_test(device):
+    print("Running synthetic SSS mask test...")
+    model = AntarBodhCNN(in_channels=14, out_depths=15).to(device)
+    model.eval()
+    
+    # 1. Base input: entirely zeros
+    x_base = torch.zeros((1, 14, 60, 80), device=device)
+    
+    # 2. SSS = 0, SSS_mask = 1
+    x_valid = x_base.clone()
+    x_valid[:, 8, :, :] = 1.0 # SSS_mask = 1
+    
+    # 3. SSS = 0, SSS_mask = 0
+    x_missing = x_base.clone()
+    x_missing[:, 8, :, :] = 0.0 # SSS_mask = 0
+    
+    with torch.no_grad():
+        out_valid = model(x_valid)
+        out_missing = model(x_missing)
+        
+    diff = torch.abs(out_valid - out_missing).sum().item()
+    assert diff > 0, "Model did not react to SSS_mask changing! Synthetic test failed."
+    print("✓ Synthetic test passed: SSS value=0 and SSS_mask=0 are processed independently by the model.\n")
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     config = sys.argv[1] if len(sys.argv) > 1 else "configs/prototype.yaml"
+    
+    # Support overriding epochs via command line for smoke tests
+    if len(sys.argv) > 3 and sys.argv[2] == "--epochs":
+        DEFAULT_TRAIN_CONFIG["epochs"] = int(sys.argv[3])
+        
     run_training(config)

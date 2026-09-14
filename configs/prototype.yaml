@@ -1,47 +1,61 @@
-
+# =============================================================================
+# ANTARBODH — Prototype Configuration
+# =============================================================================
+# AI-powered reconstruction of subsurface ocean temperature from surface
+# satellite and reanalysis observations.
+#
+# This file is the SINGLE SOURCE OF TRUTH for all preprocessing parameters.
+# Python code consumes these values; it does NOT silently override them.
+# =============================================================================
 
 project:
   name: "ANTARBODH"
   description: "AI-powered subsurface ocean temperature reconstruction"
 
-
-
+# =============================================================================
+# SPATIAL DOMAIN
+# =============================================================================
+# Values are DOMAIN EDGES, not cell centers.
+# Cell centers are computed as:  edge + resolution/2  →  edge - resolution/2
+# For the prototype:
+#   latitude centers:  5.125, 5.375, ..., 19.875  (60 cells)
+#   longitude centers: 80.125, 80.375, ..., 99.875 (80 cells)
 region:
-  # Initial Bay of Bengal prototype
-  min_lat: 5
-  max_lat: 20
-  min_lon: 80
-  max_lon: 100
+  min_lat: 5.0
+  max_lat: 20.0
+  min_lon: 80.0
+  max_lon: 100.0
 
-  # Final project domain:
+  # Final SIH project domain (not active):
   # min_lat: 5
   # max_lat: 30
   # min_lon: 45
   # max_lon: 105
 
-
-
-
+# =============================================================================
+# TEMPORAL RANGE & CHRONOLOGICAL SPLIT
+# =============================================================================
 time:
   start: "2020-01-01"
   end: "2025-12-31"
 
-  # Initial testing:
-  # start: "2020-01-01"
-  # end: "2020-01-03"
+split:
+  train_end_year: 2023      # Train: 2020-01-01 → 2023-12-31
+  val_year: 2024             # Val:   2024-01-01 → 2024-12-31
+  test_year: 2025            # Test:  2025-01-01 → 2025-12-31
 
- 
-
-
+# =============================================================================
+# TARGET GRID
+# =============================================================================
 target_grid:
-  resolution_lat: 0.25
-  resolution_lon: 0.25
+  resolution: 0.25           # degrees, used for both lat and lon
 
-  # Final target representation:
-  # X[time, latitude, longitude, channel]
-  # Y[time, depth, latitude, longitude]
-
-
+# =============================================================================
+# TARGET DEPTHS (meters)
+# =============================================================================
+# NOTE: GLORYS native shallowest depth is ~0.494 m. The 0 m level is
+# represented using this shallowest native level as a surface proxy.
+# This is documented but does NOT represent an exact 0 m observation.
 target_depths:
   - 0
   - 5
@@ -59,178 +73,164 @@ target_depths:
   - 700
   - 1000
 
+# =============================================================================
+# SOURCE DATA FILES
+# =============================================================================
+# Explicit filenames for each dataset. The pipeline selects EXACTLY these files.
+# No file-size-based selection. No ambiguous glob matching.
+data_sources:
+  glorys:
+    directory: "data/raw/glorys"
+    filename: "glorys_bob_(2).nc"
+    expected_variable: "thetao"
+    product_level: "reanalysis"
+    product_id: "cmems_mod_glo_phy_my_0.083deg_P1D-m"
 
+  sst:
+    directory: "data/raw/sst"
+    filename: "sst_bob.nc"
+    expected_variable: "analysed_sst"
+    product_level: "L4"
+    product_id: "METOFFICE-GLO-SST-L4-REP-OBS-SST"
+    units_conversion: "kelvin_to_celsius"
 
-glorys:
-  dataset_id: "cmems_mod_glo_phy_my_0.083deg_P1D-m"
+  sss:
+    directory: "data/raw/sss"
+    filename: "sss_bob_full.nc"
+    expected_variable: "sos"
+    product_level: "L4"
+    product_id: "cmems_obs-mob_glo_phy-sss_my_multi_P1D (MY+NRT combined)"
+    # LIMITATION: MY product ends 2024-12-15. Combined with NRT product
+    # covering 2024-12-16 to present to ensure full coverage across Train/Val/Test.
+    legacy_ascending: "sss_bob_ascending_(2).nc"
+    legacy_descending: "sss_bob_descending_(2).nc"
+    legacy_variable: "Sea_Surface_Salinity"
 
-  variables:
-    - "thetao"
+  ssh:
+    directory: "data/raw/ssh"
+    filename: "ssh_bob_(2).nc"
+    expected_variable: "sla"
+    product_level: "L4"
+    product_id: "c3s_obs-sl_glo_phy-ssh_my_twosat-l4-duacs-0.25deg_P1D"
 
-  min_depth: 0
-  max_depth: 1100
+  currents:
+    directory: "data/raw/currents"
+    filename: "currents_bob_(2).nc"
+    expected_variables:
+      - "uo"
+      - "vo"
+    product_level: "L4"
+    product_id: "cmems_obs-mob_glo_phy-cur_my_0.25deg_P1D-m"
 
-  output_filename: "glorys_bob"
+  winds:
+    directory: "data/raw/winds"
+    filename: "winds_bob.nc"
+    expected_variables:
+      - "eastward_wind"
+      - "northward_wind"
+    product_level: "L4"
+    product_id: "cmems_obs-wind_glo_phy_my_l4_0.125deg_PT1H"
+    temporal_resolution: "hourly"
 
-  output_directory: "data/raw/glorys"
+# =============================================================================
+# QUALITY CONTROL THRESHOLDS
+# =============================================================================
+# These are prototype-specific QC bounds. Values outside these ranges are
+# set to NaN (masked). Each threshold is documented with its rationale.
+qc_thresholds:
+  sst:
+    min: -2.0      # Approximate freezing point of seawater
+    max: 40.0      # Upper bound for tropical/subtropical SST
+    units: "degrees_C"
 
-  # GLORYS native resolution is ~1/12 degree.
-  # It will later be regridded to 0.25 degrees.
+  sss:
+    min: 0.0       # Freshwater minimum
+    max: 38.0      # Dataset-specific anomaly filter.
+    # RATIONALE: The SSS ≤ 38 bound is a CONSERVATIVE dataset-specific
+    # QC filter, NOT a universal physical oceanographic law. It is intended
+    # to remove the previously observed anomalous high-salinity population
+    # near 61–62 PSU in the raw SSS product. Open-ocean salinity rarely
+    # exceeds 37 PSU in the Bay of Bengal.
+    units: "PSU (practical salinity, source numeric convention 0.001)"
 
+  ssh:
+    min: -5.0      # Conservative SLA bounds
+    max: 5.0
+    units: "m"
 
+  currents:
+    min: -5.0      # Conservative surface current bounds
+    max: 5.0
+    units: "m/s"
 
-sst:
-  product_id: "SST_GLO_SST_L4_REP_OBSERVATIONS_010_011"
-  dataset_id: "METOFFICE-GLO-SST-L4-REP-OBS-SST"
-  variables:
-    - "analysed_sst"
-  output_filename: "sst_bob"
-  output_directory: "data/raw/sst"
-  temporal_resolution: "daily"
-  native_resolution: 0.05
+  winds:
+    min: -50.0     # Conservative wind speed bounds
+    max: 50.0
+    units: "m/s"
 
-sss:
-  product_id: "MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013"
-  dataset_id: "cmems_obs-mob_glo_phy-sss_my_multi_P1D"
-  variables:
-    - "sos"
-  output_filename: "sss_bob"
-  output_directory: "data/raw/sss"
-  temporal_resolution: "daily"
-  native_resolution: 0.25
+  thetao:
+    min: -2.0      # Approximate freezing point of seawater
+    max: 40.0      # Upper bound for deep + tropical temperatures
+    units: "degrees_C"
 
+# =============================================================================
+# WIND HOURLY-TO-DAILY RESAMPLING
+# =============================================================================
+# Minimum number of valid hourly observations required to produce a valid
+# daily mean. Days with fewer valid hours are set to NaN.
+# Default: 18 of 24 hours (75% coverage requirement).
+# Rationale: Ensures daily wind means are representative. A single valid
+# hour should not be enough to declare the entire day "observed."
+wind_min_hourly_obs_per_day: 18
 
+# =============================================================================
+# PROCESSING PARAMETERS
+# =============================================================================
+processing:
+  interpolation_method: "linear"
+  dask_workers: 4
+  compression_level: 4
 
+# =============================================================================
+# INPUT CHANNELS (7 physical + 7 validity masks = 14 total)
+# =============================================================================
+# Channel order is deterministic and must match this specification.
+input_channels:
+  physical:
+    - "SST"
+    - "SSS"
+    - "SSH"
+    - "Current_U"
+    - "Current_V"
+    - "Wind_U"
+    - "Wind_V"
+  masks:
+    - "SST_mask"
+    - "SSS_mask"
+    - "SSH_mask"
+    - "Current_U_mask"
+    - "Current_V_mask"
+    - "Wind_U_mask"
+    - "Wind_V_mask"
 
-ssh:
-  product_id: "SEALEVEL_GLO_PHY_CLIMATE_L4_MY_008_057"
+# =============================================================================
+# OUTPUT
+# =============================================================================
+output:
+  target_variable: "thetao"
+  target_units: "degrees_C"
+  target_depths: 15
+  representation:
+    inputs: "X[time, channel, latitude, longitude]"
+    targets: "Y[time, depth, latitude, longitude]"
 
-  dataset_id: "c3s_obs-sl_glo_phy-ssh_my_twosat-l4-duacs-0.25deg_P1D"
-
-  # Confirm exact variable name with:
-  # copernicusmarine describe
-  variables:
-    - "sla"
-
-  output_filename: "ssh_bob"
-
-  output_directory: "data/raw/ssh"
-
-  temporal_resolution: "daily"
-
-  native_resolution: 0.25
-
-
-
-
-currents:
-  product_id: "MULTIOBS_GLO_PHY_MYNRT_015_003"
-
-  dataset_id: "cmems_obs-mob_glo_phy-cur_my_0.25deg_P1D-m"
-
-  variables:
-    - "uo"
-    - "vo"
-
-  output_filename: "currents_bob"
-
-  output_directory: "data/raw/currents"
-
-  temporal_resolution: "daily"
-
-  native_resolution: 0.25
-
-  # Surface-current fields are used.
-  # Confirm exact depth/surface coordinate through describe.
-
-
-winds:
-  product_id: "WIND_GLO_PHY_L4_MY_012_006"
-  dataset_id: "cmems_obs-wind_glo_phy_my_l4_0.125deg_PT1H"
-  variables:
-    - "eastward_wind"
-    - "northward_wind"
-  output_filename: "winds_bob"
-  output_directory: "data/raw/winds"
-  temporal_resolution: "hourly"
-  target_resolution: 0.25
-
-
-
+# =============================================================================
+# ARGO (independent validation — NOT a model input)
+# =============================================================================
 argo:
   role: "independent_validation"
-
   output_directory: "data/raw/argo"
-
-  target_depths:
-    - 0
-    - 5
-    - 10
-    - 20
-    - 30
-    - 50
-    - 75
-    - 100
-    - 125
-    - 150
-    - 200
-    - 300
-    - 500
-    - 700
-    - 1000
-
-
-
 
 incois_argo:
   role: "independent_validation"
-
   output_directory: "data/raw/argo/incois"
-
-
-
-download:
-  file_format: "netcdf"
-
-  compression_level: 4
-
-  # Prototype mode
-  dry_run: false
-
-  # Prevent accidental overwriting
-  overwrite: false
-
-
-preprocessing:
-  target_lat_resolution: 0.25
-  target_lon_resolution: 0.25
-
-  interpolation_method: "linear"
-
-  temporal_frequency: "1D"
-
-  handle_missing_values: true
-
-  normalize_inputs: true
-
-
-input_channels:
-  - "sst"
-  - "sss"
-  - "ssh"
-  - "current_u"
-  - "current_v"
-  - "wind_u"
-  - "wind_v"
-
-
-
-
-output:
-  target_variable: "thetao"
-
-  target_depths: 15
-
-  representation:
-    inputs: "X[time, latitude, longitude, channel]"
-    targets: "Y[time, depth, latitude, longitude]"

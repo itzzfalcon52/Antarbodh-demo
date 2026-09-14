@@ -228,9 +228,32 @@ output:
 # ARGO (independent validation — NOT a model input)
 # =============================================================================
 argo:
+  enabled: true
   role: "independent_validation"
+  source: "IFREMER_GDAC_ERDDAP"
+  dataset_id: "ArgoFloats"
+  url: "https://erddap.ifremer.fr/erddap/tabledap/ArgoFloats.csv"
   output_directory: "data/raw/argo"
+  filename: "argo_bob_2025.csv"
+  
+  # Temporal and Spatial Bounds (aligns with test set)
+  start_date: "2025-01-01T00:00:00Z"
+  end_date: "2025-12-31T23:59:59Z"
+  min_lat: 5.0
+  max_lat: 20.0
+  min_lon: 80.0
+  max_lon: 100.0
 
-incois_argo:
-  role: "independent_validation"
-  output_directory: "data/raw/argo/incois"
+  # Variable Mapping (verified against IFREMER GDAC ERDDAP schema)
+  variables:
+    longitude: "longitude"
+    latitude: "latitude"
+    time: "time"
+    pressure: "pres"
+    temperature: "temp"
+    temperature_qc: "temp_qc"
+    temperature_adjusted: "temp_adjusted"
+    temperature_adjusted_qc: "temp_adjusted_qc"
+    data_mode: "data_mode"
+    platform_number: "platform_number"
+    cycle_number: "cycle_number"

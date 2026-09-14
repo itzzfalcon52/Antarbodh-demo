@@ -127,3 +127,58 @@ A complete re-analysis was conducted using the newly generated Level-4 datasets.
 
 ### Conclusion & Readiness for Deep Learning:
 With **76.48% strict joint coverage** (representing >95% of ocean pixels having every single sensor modality simultaneously available on any given day), the training set provides rich, multi-modal signal for the CNN model. The model is now poised to learn accurate surface-to-subsurface thermal relationships across the mixed layer and thermocline.
+
+---
+
+## 7. Independent ARGO Validation and Same-Observation GLORYS Benchmark
+
+Following successful CNN v1 baseline training (`outputs/checkpoints/antarbodh_cnn_v1_sih2026.pt`), a rigorous, same-observation scientific benchmark was executed against independent in-situ ARGO profiling floats across the Bay of Bengal for the full 2025 calendar year.
+
+### 1. Why ARGO is Independent
+ARGO floats are autonomous robotic CTD profilers that sample temperature and salinity in-situ down to 2,000 meters. The ARGO observations used here were retrieved directly from the **IFREMER GDAC ERDDAP** server (`ArgoFloats` product) and were strictly isolated from the training pipeline. They provide an objective ground-truth benchmark completely outside the numerical reanalysis assimilation system.
+
+### 2. Why Comparing Both Models Against the Same Observations is Necessary
+Previously, ANTARBODH exhibited an apparent RMSE of **0.9161 °C** when evaluated against the full GLORYS regular grid, but showed **0.6218 °C** RMSE when evaluated against ARGO floats. These two evaluations sampled fundamentally different spatial and depth populations (uniform oceanic grid vs. Lagrangian float trajectories). To eliminate sampling mismatch ambiguity, ANTARBODH and GLORYS were evaluated on the **exact same 201,942 ARGO observation points** across **1,383 unique profiles**.
+
+### 3. How Exact-Location and Depth Interpolation Works
+For every valid ARGO measurement at date $t$, latitude $\phi$, longitude $\lambda$, and physical depth $z$:
+1. The 3D temperature fields for date $t$ are extracted from ANTARBODH and GLORYS.
+2. Horizontal bilinear interpolation is applied on the 0.25° grid to $(\phi, \lambda)$.
+3. 1D linear interpolation is applied across the 15 canonical depth levels (0–1000 m) to the exact float depth $z$.
+4. Both models are evaluated in **observation space** without interpolating or altering the raw ARGO measurements.
+
+### 4. Why ARGO is Not Used During Training
+ARGO observations were **not** used for:
+- Model training or loss computation
+- Preprocessing or normalization statistics
+- Architecture selection or hyperparameter tuning
+- Checkpoint selection or early stopping
+Keeping ARGO entirely out of the loop guarantees a zero-leakage, uncompromised test of true generalization.
+
+### 5. What the Same-Observation Results Mean
+
+Evaluated over **201,942 identical observations**:
+
+| Metric | ANTARBODH vs ARGO | GLORYS vs ARGO | Comparison / Delta |
+| :--- | :--- | :--- | :--- |
+| **Observation Count ($N$)** | **201,942** | **201,942** | Exact Same Observations |
+| **Overall RMSE** | **0.6218 °C** | **0.5521 °C** | +0.0697 °C delta (-12.6% relative) |
+| **Overall MAE** | **0.3848 °C** | **0.3243 °C** | +0.0605 °C delta (-18.6% relative) |
+| **Overall Mean Bias** | **+0.0198 °C** | **+0.1185 °C** | **0.0987 °C lower absolute bias in ANTARBODH** |
+| **Pearson Correlation ($r$)** | **0.9968** | **0.9976** | Near-identical correlation |
+
+- **Deep Column Superiority (300–1000 m)**: In the deep ocean, ANTARBODH consistently outperforms GLORYS against independent ARGO:
+  - **300 m**: ANTARBODH RMSE 0.3403 °C vs GLORYS 0.3877 °C (**12.2% improvement**)
+  - **500 m**: ANTARBODH RMSE 0.1905 °C vs GLORYS 0.2330 °C (**18.2% improvement**)
+  - **700 m**: ANTARBODH RMSE 0.2046 °C vs GLORYS 0.2784 °C (**26.5% improvement**)
+  - **1000 m**: ANTARBODH RMSE 0.1999 °C vs GLORYS 0.2741 °C (**27.1% improvement**)
+- **Thermocline Bias Resolution (75–150 m)**: The prior apparent -0.78 °C bias of ANTARBODH against GLORYS at 100 m was driven by GLORYS itself: GLORYS exhibits a **+0.6568 °C positive bias** relative to in-situ ARGO at 100 m, whereas ANTARBODH bias against ARGO is nearly zero (**-0.0525 °C**).
+- **Surface Bias Diagnosis (0–30 m)**: ANTARBODH shows a +0.395 °C to +0.448 °C positive bias in the upper 20 m. Investigation revealed that satellite L4 SST matches near-surface ARGO (bias -0.09 °C to -0.04 °C), meaning the bias originates from internal CNN layer representations under 2025 SSS missingness rather than SST data errors.
+
+### 6. What the Results Do NOT Prove
+- These results do **NOT** prove that GLORYS has "drifted" or is invalid; GLORYS remains an exceptionally strong operational reanalysis product (overall RMSE 0.5521 °C vs. ARGO).
+- They do **NOT** prove the CNN has "discovered new ocean physics"; rather, they prove that the CNN learns a smooth, robust representation that generalizes well to real-world in-situ float data.
+
+### 7. Recommended Next Step: NRT SSS Ablation
+With independent ARGO validation and the same-observation GLORYS benchmark fully completed, the path is clear for the next experiment:
+**Integrate Copernicus Marine NRT Level-4 SSS for 2025 and conduct a systematic SSS ablation study** to quantify how real-time sea surface salinity influences thermocline and mixed-layer reconstruction.

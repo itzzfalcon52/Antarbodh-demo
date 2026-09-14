@@ -1,117 +1,74 @@
-import { useState, useEffect } from 'react';
-import { OceanMap } from '../components/map/OceanMap';
-import { DataLegend } from '../components/map/DataLegend';
-import { LayerSelector } from '../components/exploration/LayerSelector';
-import { TimelineNavigator } from '../components/timeline/TimelineNavigator';
-import { CoordinateInput } from '../components/location/CoordinateInput';
-import { InspectionPanel } from '../components/location/InspectionPanel';
-import { ApiClient } from '../api/client';
-import type { MetadataResponse, TemperatureSliceResponse, SelectedLocation } from '../types/api';
+import React, { useEffect, useState } from 'react'
+import { OceanMap } from '../components/map/OceanMap'
+import { DepthLadder } from '../components/navigation/DepthLadder'
+import { DateScrubber } from '../components/navigation/DateScrubber'
+import { ThermalLegend } from '../components/map/ThermalLegend'
+import { CoordinateChip } from '../components/map/CoordinateChip'
+import { InspectionPanel } from '../components/location/InspectionPanel'
+import { OceanCrossSection3D } from '../components/diorama/OceanCrossSection3D'
+import { useOceanStore } from '../store/useOceanStore'
 
-export function Explore() {
-  const [metadata, setMetadata] = useState<MetadataResponse | null>(null);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedDepth, setSelectedDepth] = useState(0);
-  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
-  
-  const [temperatureSlice, setTemperatureSlice] = useState<TemperatureSliceResponse | null>(null);
-  const [loadingSlice, setLoadingSlice] = useState(false);
+export const Explore: React.FC = () => {
+  const { initApp, loadingSlice, selectedDate, selectedDepth } = useOceanStore()
+  const [showDiorama, setShowDiorama] = useState(false)
 
-  // Initial load: Fetch metadata
   useEffect(() => {
-    ApiClient.getMetadata()
-      .then((m) => {
-        setMetadata(m);
-        if (m.supported_dates.length > 0) {
-          setSelectedDate(m.supported_dates[0]);
-        }
-      })
-      .catch(err => console.error("Failed to load metadata:", err));
-  }, []);
-
-  // Fetch temperature slice whenever date or depth changes
-  useEffect(() => {
-    if (!selectedDate) return;
-    
-    const controller = new AbortController();
-    setLoadingSlice(true);
-    
-    ApiClient.getTemperatureSlice(selectedDate, selectedDepth, controller.signal)
-      .then(slice => {
-        setTemperatureSlice(slice);
-      })
-      .catch(err => {
-        if (err.name !== 'AbortError') {
-          console.error("Failed to load temperature slice:", err);
-        }
-      })
-      .finally(() => {
-        setLoadingSlice(false);
-      });
-      
-    return () => controller.abort();
-  }, [selectedDate, selectedDepth]);
-
-  if (!metadata) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        <div className="spinner" style={{ width: '24px', height: '24px', border: '2px solid var(--accent-primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      </div>
-    );
-  }
-
-  const depths = metadata.supported_depths;
-  const dates = metadata.supported_dates;
-  const domain = metadata.domain;
+    initApp()
+  }, [initApp])
 
   return (
-    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-      
-      {/* 1. Map Instrument */}
-      <OceanMap 
-        temperatureSlice={temperatureSlice}
-        selectedLocation={selectedLocation}
-        onLocationClick={setSelectedLocation}
-      />
+    <div className="relative w-full h-[calc(100vh-56px)] flex overflow-hidden bg-[#060B12]">
+      {/* Main Map Viewport */}
+      <div className="relative flex-1 h-full overflow-hidden">
+        {/* Full-bleed MapLibre Map */}
+        <OceanMap />
 
-      {/* 2. Top-Left: Data Context */}
-      <LayerSelector 
-        depths={depths}
-        selectedDepth={selectedDepth}
-        onDepthChange={setSelectedDepth}
-        variableNames={metadata.variable_names}
-      />
+        {/* Depth Ladder on Left Edge */}
+        <DepthLadder />
 
-      {/* 3. Top-Right: Coordinate Search */}
-      <CoordinateInput 
-        domain={domain}
-        onLocationSubmit={setSelectedLocation}
-      />
+        {/* Date Scrubber at Bottom Edge */}
+        <DateScrubber />
 
-      {/* 4. Bottom-Right: Legend */}
-      <DataLegend 
-        min={temperatureSlice?.min_temp ?? 20}
-        max={temperatureSlice?.max_temp ?? 32}
-        unit={metadata.units.temperature}
-        variableName="Temperature"
-      />
+        {/* Thermal Colormap Legend at Bottom Right */}
+        <ThermalLegend />
 
-      {/* 5. Bottom-Center: Timeline Navigator */}
-      <TimelineNavigator 
-        dates={dates}
-        selectedDate={selectedDate}
-        onDateSelected={setSelectedDate}
-        isLoading={loadingSlice}
-      />
+        {/* Pointer Coordinates Chip at Bottom Left */}
+        <CoordinateChip />
 
-      {/* 6. Contextual Inspection Drawer (Slide in from right) */}
-      <InspectionPanel 
-        location={selectedLocation}
-        date={selectedDate}
-        depth={selectedDepth}
-        onClose={() => setSelectedLocation(null)}
-      />
+        {/* 3D Cross-Section Diorama Widget (Collapsible / Expandable in Top Right) */}
+        <div className="absolute top-6 right-4 z-20 flex flex-col items-end">
+          <button
+            type="button"
+            onClick={() => setShowDiorama(!showDiorama)}
+            className="btn-secondary text-xs bg-[#0A121C] shadow-md flex items-center gap-1.5"
+            aria-expanded={showDiorama}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+            <span>{showDiorama ? 'Hide 3D cross-section' : '3D cross-section'}</span>
+          </button>
 
+          {showDiorama && (
+            <div className="mt-2 shadow-xl">
+              <OceanCrossSection3D />
+            </div>
+          )}
+        </div>
+
+        {/* Slice Fetch Loading Status (Section 12 Copy Guidelines) */}
+        {loadingSlice && (
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 bg-[#0A121C] border border-[#1C2C3D] px-3.5 py-1.5 font-mono text-xs text-[#E8642F] shadow-lg flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#E8642F] animate-ping" />
+            <span>Loading {selectedDate}, {selectedDepth}m depth…</span>
+          </div>
+        )}
+      </div>
+
+      {/* Inspection Panel (Slides in from Right Edge) */}
+      <InspectionPanel />
     </div>
-  );
+  )
 }

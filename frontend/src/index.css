@@ -1,111 +1,364 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+@theme {
+  --color-abyss-950: #060B12;
+  --color-abyss-900: #0A121C;
+  --color-abyss-800: #101B28;
+  --color-abyss-700: #1C2C3D;
+  --color-fog-400: #5C7086;
+  --color-fog-100: #C7D2DA;
+  --color-white-ish: #EDF2F5;
+  --color-signal-orange: #E8642F;
+  --color-signal-orange-dim: #7A3B22;
+  --color-thermocline-cyan: #3FA7C4;
+  --color-validated-green: #4F9C6D;
+  --color-warning-amber: #D9A441;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --font-display: "Fraunces", serif;
+  --font-body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root {
+  --abyss-950: #060B12;   /* page background, deepest water */
+  --abyss-900: #0A121C;   /* panel background */
+  --abyss-800: #101B28;   /* raised panel / card background */
+  --abyss-700: #1C2C3D;   /* borders, hairlines, grid lines */
+  --fog-400: #5C7086;     /* muted / secondary text */
+  --fog-100: #C7D2DA;     /* body text */
+  --white-ish: #EDF2F5;   /* headings, high-emphasis text */
+  --signal-orange: #E8642F; /* float-housing orange — CTAs, live markers, active state */
+  --signal-orange-dim: #7A3B22; /* orange at low emphasis (borders, disabled) */
+  --thermocline-cyan: #3FA7C4; /* secondary accent — cold-water data, links */
+  --validated-green: #4F9C6D; /* used ONLY for "matches ground truth" states, never decoratively */
+  --warning-amber: #D9A441;  /* sensor-missing / masked-data states */
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  /* Thermal Colormap for data */
+  --thermal-0: #1E3A8A;
+  --thermal-25: #2E8FB0;
+  --thermal-50: #E8D95C;
+  --thermal-75: #E8642F;
+  --thermal-100: #B23A2E;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--abyss-950);
+  color: var(--fog-100);
+  font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global bathymetric survey texture overlay + subtle 32px grid on base background */
+body {
+  background-image:
+    linear-gradient(var(--abyss-900) 1px, transparent 1px),
+    linear-gradient(90deg, var(--abyss-900) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-body {
-  margin: 0;
+/* Typography styles */
+.font-display {
+  font-family: 'Fraunces', serif;
+  font-optical-sizing: auto;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.font-body {
+  font-family: 'Public Sans', sans-serif;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.font-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-feature-settings: "tnum" 1;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
+/* Instrument Buttons */
+.btn-primary {
+  background-color: var(--signal-orange);
+  color: var(--abyss-950);
   border-radius: 4px;
-  color: var(--text-h);
+  font-family: 'Public Sans', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 6px 14px;
+  border: 1px solid var(--signal-orange);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.btn-primary:hover {
+  background-color: #f07441;
+  border-color: #f07441;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--fog-100);
+  border: 1px solid var(--abyss-700);
+  border-radius: 4px;
+  font-family: 'Public Sans', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 6px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--signal-orange-dim);
+  background-color: var(--abyss-800);
+  color: var(--white-ish);
+}
+
+/* Reticle Cursor for the Map */
+.cursor-reticle {
+  cursor: crosshair;
+}
+
+/* ── Mandatory Duotone Treatment for Raster Assets (B.0) ── */
+.brand-image {
+  filter: grayscale(1) brightness(0.85) contrast(1.05);
+  background-blend-mode: luminosity;
+  position: relative;
+}
+
+.brand-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6,11,18,0.2) 0%, rgba(6,11,18,0.85) 100%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Panel and Card Framing — Strict 1px hairlines, subtle noise grain on hover (C.6) */
+.instrument-panel {
+  position: relative;
+  background-color: var(--abyss-900);
+  border: 1px solid var(--abyss-700);
+  border-radius: 0px;
+}
+
+.instrument-card, .instrument-panel-card {
+  position: relative;
+  background-color: var(--abyss-800);
+  border: 1px solid var(--abyss-700);
+  border-radius: 0px;
+  transition: border-color 150ms ease;
+  overflow: hidden;
+}
+
+.instrument-card::before, .instrument-panel-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/generated/card-noise-accent.jpg');
+  background-size: 256px 256px;
+  background-repeat: repeat;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+  z-index: 1;
+}
+
+.instrument-card:hover, .instrument-panel-card:hover {
+  border-color: var(--signal-orange-dim);
+}
+
+.instrument-card:hover::before, .instrument-panel-card:hover::before {
+  opacity: 0.04;
+}
+
+.floating-panel {
+  background-color: var(--abyss-900);
+  border: 1px solid var(--abyss-700);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Scrollbar for scientific logs */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--abyss-950);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--abyss-700);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fog-400);
+}
+
+/* MapLibre Canvas Container Fixes */
+.maplibregl-map {
+  font-family: 'Public Sans', sans-serif;
+}
+
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}
+
+/* ── Custom Range Slider (Date Scrubber) ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+  height: 16px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--abyss-700);
+  border: none;
+  border-radius: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 18px;
+  background: var(--signal-orange);
+  border: 1px solid var(--signal-orange);
+  border-radius: 1px;
+  margin-top: -7px;
+  cursor: ew-resize;
+  box-shadow: 0 0 6px rgba(232, 100, 47, 0.35);
+  transition: box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 10px rgba(232, 100, 47, 0.55);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--abyss-700);
+  border: none;
+  border-radius: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: 18px;
+  background: var(--signal-orange);
+  border: 1px solid var(--signal-orange);
+  border-radius: 1px;
+  cursor: ew-resize;
+  box-shadow: 0 0 6px rgba(232, 100, 47, 0.35);
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 2px;
+}
+
+/* ── Depth Readout Glow Line ── */
+.depth-readout-line {
+  position: absolute;
+  right: -100px;
+  top: 50%;
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(to right, var(--signal-orange), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: readout-pulse 2s ease-in-out infinite;
+}
+
+@keyframes readout-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.65; }
+}
+
+/* ── Thermal crossfade pulse ── */
+@keyframes thermal-fade {
+  0% { opacity: 0.85; }
+  30% { opacity: 0.3; }
+  100% { opacity: 0.85; }
+}
+
+/* ── 3D Cube Emblem Glow Pulse ── */
+.antarbodh-cube-pulse {
+  box-shadow: 0 0 16px rgba(63, 167, 196, 0.3), 0 0 32px rgba(232, 100, 47, 0.2);
+  animation: cube-glow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes cube-glow {
+  0% {
+    box-shadow: 0 0 12px rgba(63, 167, 196, 0.2), 0 0 24px rgba(232, 100, 47, 0.15);
+  }
+  100% {
+    box-shadow: 0 0 24px rgba(63, 167, 196, 0.45), 0 0 45px rgba(232, 100, 47, 0.3);
+  }
+}
+
+/* ── Architecture Diagram One-Shot Connector Pulse (C.5) ── */
+@keyframes connectorPulseAnim {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -40;
+    opacity: 0;
+  }
+}
+
+.pipeline-pulse-connector {
+  stroke-dasharray: 8 32;
+  animation: connectorPulseAnim 600ms ease-out 1 forwards;
+}
+
+/* ── Prefers Reduced Motion Fallback (C.7) ── */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pipeline-pulse-connector {
+    animation: none !important;
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
+    opacity: 1 !important;
+  }
 }

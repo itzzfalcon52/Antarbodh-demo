@@ -7,6 +7,7 @@ from backend.app.schemas.temperature import TemperatureSliceResponse
 router = APIRouter(tags=["temperature"])
 
 @router.get("/temperature", response_model=TemperatureSliceResponse)
+@router.get("/temperature/slice", response_model=TemperatureSliceResponse)
 def get_temperature(
     date: str = Query(..., description="Date in YYYY-MM-DD format (2025)"),
     depth: float = Query(..., description="Canonical depth in meters")

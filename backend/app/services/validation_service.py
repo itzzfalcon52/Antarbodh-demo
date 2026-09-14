@@ -91,10 +91,34 @@ class ValidationService:
                 "glorys_corr": round(float(row["glorys_corr"]), 4)
             })
 
+        # Load profiles CSV if exists
+        self._matched_profiles = []
+        prof_path = settings.VALIDATION_PROFILES_CSV_PATH
+        if prof_path.exists():
+            df_prof = pd.read_csv(prof_path)
+            for _, row in df_prof.iterrows():
+                self._matched_profiles.append({
+                    "profile_id": str(row["profile_id"]),
+                    "platform_number": int(row["platform_number"]),
+                    "cycle_number": int(row["cycle_number"]),
+                    "time": str(row["time"]),
+                    "latitude": float(row["latitude"]),
+                    "longitude": float(row["longitude"]),
+                    "n_obs": int(row["n_obs"]),
+                    "antarbodh_rmse": round(float(row["antarbodh_rmse"]), 4),
+                    "glorys_rmse": round(float(row["glorys_rmse"]), 4),
+                    "antarbodh_bias": round(float(row["antarbodh_bias"]), 4),
+                    "glorys_bias": round(float(row["glorys_bias"]), 4),
+                    "antarbodh_better": bool(row["antarbodh_better"])
+                })
+
     def get_summary(self) -> Dict[str, Any]:
         return self._summary
 
     def get_depth_metrics(self) -> List[Dict[str, Any]]:
         return self._depth_metrics
+
+    def get_matched_profiles(self) -> List[Dict[str, Any]]:
+        return self._matched_profiles
 
 validation_service = ValidationService.get_instance()

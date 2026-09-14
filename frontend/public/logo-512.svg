@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- Solid Abyss-950 Background -->
+  <rect width="512" height="512" fill="#060B12" />
+  
+  <!-- Centered Scaled Logo Geometry (32x32 scaled to 320x320 with offset (96, 96)) -->
+  <g transform="translate(96, 96) scale(10)">
+    <!-- Sea Surface Wave Transitioning into Subsurface CTD Cast -->
+    <path d="M 3 11 C 6 7, 9 15, 12 11 C 14 8, 15.5 9, 16 11 L 16 28" stroke="#E8642F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Subsurface Depth Sensor Tick Marks -->
+    <line x1="12.5" y1="15" x2="19.5" y2="15" stroke="#E8642F" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="11" y1="19" x2="21" y2="19" stroke="#E8642F" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="12.5" y1="23" x2="19.5" y2="23" stroke="#E8642F" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="13.5" y1="27" x2="18.5" y2="27" stroke="#E8642F" stroke-width="1.5" stroke-linecap="round" />
+  </g>
+</svg>

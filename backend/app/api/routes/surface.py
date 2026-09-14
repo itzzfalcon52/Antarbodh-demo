@@ -7,6 +7,7 @@ from backend.app.schemas.surface import SurfaceConditionsResponse
 router = APIRouter(tags=["surface"])
 
 @router.get("/surface", response_model=SurfaceConditionsResponse)
+@router.get("/surface/conditions", response_model=SurfaceConditionsResponse)
 def get_surface(
     date: str = Query(..., description="Date in YYYY-MM-DD format (2025)"),
     lat: float = Query(..., description="Latitude in degrees North [5.0, 20.0]"),

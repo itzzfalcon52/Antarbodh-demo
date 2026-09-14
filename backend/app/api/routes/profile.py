@@ -7,6 +7,7 @@ from backend.app.schemas.profile import ProfileResponse
 router = APIRouter(tags=["profile"])
 
 @router.get("/profile", response_model=ProfileResponse)
+@router.get("/profile/point", response_model=ProfileResponse)
 def get_profile(
     date: str = Query(..., description="Date in YYYY-MM-DD format (2025)"),
     lat: float = Query(..., description="Latitude in degrees North [5.0, 20.0]"),

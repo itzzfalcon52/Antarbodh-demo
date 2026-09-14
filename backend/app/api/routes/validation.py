@@ -20,3 +20,14 @@ def get_validation_depth():
         return {"depth_metrics": metrics}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load depth validation metrics: {str(e)}")
+
+@router.get("/validation/argo/matched")
+def get_validation_argo_matched():
+    try:
+        profiles = validation_service.get_matched_profiles()
+        return {
+            "total_profiles": len(profiles),
+            "profiles": profiles
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load matched ARGO profiles: {str(e)}")

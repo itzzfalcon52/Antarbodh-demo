@@ -1,0 +1,44 @@
+{
+  "model_id": "antarbodh_cnn_v1_sih2026",
+  "checkpoint": "outputs/checkpoints/antarbodh_cnn_v1_sih2026.pt",
+  "generation_timestamp": "2026-09-14T18:00:00Z",
+  "time_start": "2025-01-01",
+  "time_end": "2025-12-31",
+  "num_days": 365,
+  "depths": [
+    0.0,
+    5.0,
+    10.0,
+    20.0,
+    30.0,
+    50.0,
+    75.0,
+    100.0,
+    125.0,
+    150.0,
+    200.0,
+    300.0,
+    500.0,
+    700.0,
+    1000.0
+  ],
+  "num_depths": 15,
+  "latitude_bounds": [
+    5.125,
+    19.875
+  ],
+  "num_lat": 60,
+  "longitude_bounds": [
+    80.125,
+    99.875
+  ],
+  "num_lon": 80,
+  "resolution_deg": 0.25,
+  "temperature_stats": {
+    "min": 3.4728596210479736,
+    "max": 36.4489631652832,
+    "mean": 21.72747039794922
+  },
+  "units": "degrees_C",
+  "file": "outputs/inference/2025/antarbodh_2025_predictions.nc"
+}

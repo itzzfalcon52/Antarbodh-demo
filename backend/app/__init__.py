@@ -1,1 +1,0 @@
-"""ANTARBODH backend application package."""

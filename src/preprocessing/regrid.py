@@ -87,7 +87,7 @@ def regrid_surface_variables(
         "longitude": len(common_lon),
     })
 
-    print("✓ Surface variables regridded and merged.")
+    print("Surface variables regridded and merged.")
     return surface_common
 
 
@@ -122,5 +122,5 @@ def regrid_glorys_target(
     print("Interpolating GLORYS horizontally to common 0.25° grid...")
     thetao_common = thetao_15depth.interp(latitude=common_lat, longitude=common_lon)
 
-    print("✓ GLORYS 3D target regridding complete.")
+    print("GLORYS 3D target regridding complete.")
     return thetao_common

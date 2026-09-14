@@ -32,6 +32,9 @@ def load_config():
 def download(url, destination):
     destination.parent.mkdir(parents=True, exist_ok=True)
     print(f"Downloading {url}")
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')]
+    urllib.request.install_opener(opener)
     urllib.request.urlretrieve(url, destination)
 
 
@@ -44,9 +47,9 @@ def main():
     outdir.mkdir(parents=True, exist_ok=True)
 
     # GDAC profile index is the authoritative way to discover profile files.
-    index_url = f"{GDAC_ROOT}/argo_global-profile_index.txt"
+    index_url = f"{GDAC_ROOT}/ar_index_global_prof.txt"
 
-    index_path = outdir / "argo_global-profile_index.txt"
+    index_path = outdir / "ar_index_global_prof.txt"
     download(index_url, index_path)
 
     print("\nIndex downloaded.")

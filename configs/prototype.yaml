@@ -1,10 +1,6 @@
-
-
 project:
   name: "ANTARBODH"
   description: "AI-powered subsurface ocean temperature reconstruction"
-
-
 
 region:
   # Initial Bay of Bengal prototype
@@ -13,34 +9,13 @@ region:
   min_lon: 80
   max_lon: 100
 
-  # Final project domain:
-  # min_lat: 5
-  # max_lat: 30
-  # min_lon: 45
-  # max_lon: 105
-
-
-
-
 time:
   start: "2020-01-01"
   end: "2025-12-31"
 
-  # Initial testing:
-  # start: "2020-01-01"
-  # end: "2020-01-03"
-
- 
-
-
 target_grid:
   resolution_lat: 0.25
   resolution_lon: 0.25
-
-  # Final target representation:
-  # X[time, latitude, longitude, channel]
-  # Y[time, depth, latitude, longitude]
-
 
 target_depths:
   - 0
@@ -59,25 +34,14 @@ target_depths:
   - 700
   - 1000
 
-
-
 glorys:
   dataset_id: "cmems_mod_glo_phy_my_0.083deg_P1D-m"
-
   variables:
     - "thetao"
-
   min_depth: 0
   max_depth: 1100
-
   output_filename: "glorys_bob"
-
   output_directory: "data/raw/glorys"
-
-  # GLORYS native resolution is ~1/12 degree.
-  # It will later be regridded to 0.25 degrees.
-
-
 
 sst:
   product_id: "SST_GLO_SST_L4_REP_OBSERVATIONS_010_011"
@@ -99,50 +63,26 @@ sss:
   temporal_resolution: "daily"
   native_resolution: 0.25
 
-
-
-
 ssh:
   product_id: "SEALEVEL_GLO_PHY_CLIMATE_L4_MY_008_057"
-
   dataset_id: "c3s_obs-sl_glo_phy-ssh_my_twosat-l4-duacs-0.25deg_P1D"
-
-  # Confirm exact variable name with:
-  # copernicusmarine describe
   variables:
     - "sla"
-
   output_filename: "ssh_bob"
-
   output_directory: "data/raw/ssh"
-
   temporal_resolution: "daily"
-
   native_resolution: 0.25
-
-
-
 
 currents:
   product_id: "MULTIOBS_GLO_PHY_MYNRT_015_003"
-
   dataset_id: "cmems_obs-mob_glo_phy-cur_my_0.25deg_P1D-m"
-
   variables:
     - "uo"
     - "vo"
-
   output_filename: "currents_bob"
-
   output_directory: "data/raw/currents"
-
   temporal_resolution: "daily"
-
   native_resolution: 0.25
-
-  # Surface-current fields are used.
-  # Confirm exact depth/surface coordinate through describe.
-
 
 winds:
   product_id: "WIND_GLO_PHY_L4_MY_012_006"
@@ -155,13 +95,9 @@ winds:
   temporal_resolution: "hourly"
   target_resolution: 0.25
 
-
-
 argo:
   role: "independent_validation"
-
   output_directory: "data/raw/argo"
-
   target_depths:
     - 0
     - 5
@@ -179,40 +115,23 @@ argo:
     - 700
     - 1000
 
-
-
-
 incois_argo:
   role: "independent_validation"
-
   output_directory: "data/raw/argo/incois"
-
-
 
 download:
   file_format: "netcdf"
-
   compression_level: 4
-
-  # Prototype mode
   dry_run: false
-
-  # Prevent accidental overwriting
   overwrite: false
-
 
 preprocessing:
   target_lat_resolution: 0.25
   target_lon_resolution: 0.25
-
   interpolation_method: "linear"
-
   temporal_frequency: "1D"
-
   handle_missing_values: true
-
   normalize_inputs: true
-
 
 input_channels:
   - "sst"
@@ -222,15 +141,44 @@ input_channels:
   - "current_v"
   - "wind_u"
   - "wind_v"
-
-
-
+  - "bathymetry"
+  - "coriolis"
+  - "doy_sin"
+  - "doy_cos"
+  - "lat_norm"
+  - "lon_norm"
 
 output:
   target_variable: "thetao"
-
   target_depths: 15
-
   representation:
     inputs: "X[time, latitude, longitude, channel]"
     targets: "Y[time, depth, latitude, longitude]"
+
+training:
+  # Model architecture
+  model: "cnn"              # "cnn" (full) or "cnn_lite" (lightweight)
+  base_filters: 64          # Base filter count for CNN encoder
+
+  # Optimizer
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  optimizer: "adamw"
+
+  # Training schedule
+  epochs: 50
+  batch_size: 16
+  early_stop_patience: 15
+
+  # Spatial patching
+  patch_size: 32             # Extract 32×32 patches during training
+
+  # Data split (chronological, uses 6-year L4 dataset)
+  train_years: [2020, 2023]
+  val_years: [2024, 2024]
+  test_years: [2025, 2025]
+
+  # Paths
+  data_dir: "data/processed"
+  checkpoint_dir: "outputs/checkpoints"
+  log_dir: "outputs/logs"

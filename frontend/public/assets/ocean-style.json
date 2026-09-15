@@ -1,0 +1,37 @@
+{
+  "version": 8,
+  "name": "ANTARBODH Ocean Style",
+  "sources": {
+    "basemap": {
+      "type": "geojson",
+      "data": "/assets/countries.geojson"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#0C2233"
+      }
+    },
+    {
+      "id": "land",
+      "type": "fill",
+      "source": "basemap",
+      "paint": {
+        "fill-color": "#16384D"
+      }
+    },
+    {
+      "id": "coastline",
+      "type": "line",
+      "source": "basemap",
+      "paint": {
+        "line-color": "#2AAFA3",
+        "line-width": 1,
+        "line-opacity": 0.3
+      }
+    }
+  ]
+}

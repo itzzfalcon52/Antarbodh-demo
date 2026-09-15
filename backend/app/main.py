@@ -21,7 +21,7 @@ app.add_middleware(
 # Register routes
 app.include_router(health.router, prefix="/api")
 app.include_router(metadata.router, prefix="/api")
-app.include_router(validation.router, prefix="/api")
+app.include_router(validation.router, prefix="/api/validation")
 app.include_router(availability.router, prefix="/api")
 app.include_router(historical.router, prefix="/api/historical")
 app.include_router(prediction.router, prefix="/api/prediction")

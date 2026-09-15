@@ -8,7 +8,7 @@ from ...services.cache_service import cache_service
 router = APIRouter()
 
 @router.get("/temperature")
-async def get_temperature(date: str, depth: float, mode: str = "auto"):
+def get_temperature(date: str, depth: float, mode: str = "auto"):
     """
     mode: historical | predict | auto
     """

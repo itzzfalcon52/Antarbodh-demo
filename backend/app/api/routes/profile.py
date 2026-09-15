@@ -8,7 +8,7 @@ from ...config import settings
 router = APIRouter()
 
 @router.get("/profile")
-async def get_profile(date: str, lat: float, lon: float, mode: str = "auto"):
+def get_profile(date: str, lat: float, lon: float, mode: str = "auto"):
     """
     mode: historical | predict | auto
     """

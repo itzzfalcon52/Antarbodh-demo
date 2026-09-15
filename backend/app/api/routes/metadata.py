@@ -4,7 +4,7 @@ from ...config import settings
 router = APIRouter()
 
 @router.get("/metadata")
-async def get_metadata():
+def get_metadata():
     return {
         "model_id": settings.model_id,
         "input_channels": settings.input_channels,

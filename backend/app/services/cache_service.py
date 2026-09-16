@@ -34,7 +34,11 @@ class CacheService:
                 "prediction_date": date_str,
                 "input_channels": settings.input_channels,
                 "units": "degC",
-                "provenance": "on_demand_prediction"
+                "provenance": "on_demand_prediction",
+                "preprocessing_version": "preprocessing_v1",
+                "domain": "5N-20N_80E-100E",
+                "grid_resolution": settings.resolution,
+                "target_depth_count": len(depths),
             }
         )
         ds.to_netcdf(self.get_cache_path(date_str))

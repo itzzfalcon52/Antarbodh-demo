@@ -1,0 +1,165 @@
+/* =========================================================
+   ANTARBODH — DESIGN TOKENS
+   Ocean-depth scientific visual system.
+   Names from the original system are preserved so that
+   every existing consumer keeps working unchanged.
+   ========================================================= */
+
+:root {
+  /* ---------------------------------------------------------
+     SURFACES — from abyss (deepest) to shelf (raised)
+     --------------------------------------------------------- */
+  --color-abyss: #030B12;
+  --color-ink: #05111A;
+  --color-deep: #081A26;
+  --color-panel: #0B2130;
+  --color-panel-light: #11303F;
+  --color-shelf: #16394A;
+
+  /* Layered translucency used for insets and overlays */
+  --surface-sunken: rgba(3, 11, 18, 0.55);
+  --surface-raised: rgba(255, 255, 255, 0.025);
+  --surface-hover: rgba(255, 255, 255, 0.045);
+  --surface-scrim: rgba(3, 11, 18, 0.72);
+
+  /* ---------------------------------------------------------
+     LINES
+     --------------------------------------------------------- */
+  --color-border: rgba(146, 176, 196, 0.16);
+  --color-border-strong: rgba(146, 176, 196, 0.30);
+  --color-border-faint: rgba(146, 176, 196, 0.09);
+
+  /* ---------------------------------------------------------
+     TEXT
+     --------------------------------------------------------- */
+  --color-text: #E6EEF3;
+  --color-text-muted: #9BB1C0;
+  --color-text-subtle: #6B8595;
+  --color-text-faint: #4A6373;
+
+  /* ---------------------------------------------------------
+     ACCENTS
+     --------------------------------------------------------- */
+  --color-ocean: #2F9FC4;
+  --color-ocean-bright: #57C9E6;
+  --color-ocean-deep: #1B6C8C;
+  --color-teal: #2BAE9E;
+
+  /* Warm neutral — reserved for emphasis, never decoration */
+  --color-sand: #D8BC93;
+  --color-sand-soft: rgba(216, 188, 147, 0.14);
+
+  /* Accent washes */
+  --wash-ocean: rgba(47, 159, 196, 0.10);
+  --wash-ocean-strong: rgba(47, 159, 196, 0.20);
+  --wash-teal: rgba(43, 174, 158, 0.12);
+  --wash-danger: rgba(226, 91, 91, 0.10);
+
+  /* ---------------------------------------------------------
+     STATUS
+     --------------------------------------------------------- */
+  --color-warning: #D9A441;
+  --color-danger: #E25B5B;
+  --color-success: #2BAE9E;
+
+  /* ---------------------------------------------------------
+     DEPTH GRADIENT — the vertical language of the product
+     --------------------------------------------------------- */
+  --depth-upper: #57C9E6;
+  --depth-thermocline: #2F9FC4;
+  --depth-deep: #1B4F6B;
+  --gradient-depth: linear-gradient(
+    180deg,
+    var(--depth-upper) 0%,
+    var(--depth-thermocline) 42%,
+    var(--depth-deep) 100%
+  );
+
+  /* Ambient field used behind full-bleed sections */
+  --gradient-abyss: radial-gradient(
+      120% 90% at 12% -10%,
+      rgba(47, 159, 196, 0.16) 0%,
+      rgba(47, 159, 196, 0) 58%
+    ),
+    radial-gradient(
+      100% 80% at 100% 0%,
+      rgba(43, 174, 158, 0.10) 0%,
+      rgba(43, 174, 158, 0) 55%
+    ),
+    var(--color-ink);
+
+  /* ---------------------------------------------------------
+     SPACING — 4 / 8 rhythm
+     --------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+  --space-10: 64px;
+  --space-12: 96px;
+
+  /* ---------------------------------------------------------
+     RADII
+     --------------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-full: 999px;
+
+  /* ---------------------------------------------------------
+     ELEVATION — low contrast, no glow
+     --------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35),
+               0 1px 1px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 8px 24px -12px rgba(0, 0, 0, 0.62),
+               0 2px 6px -2px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 56px -24px rgba(0, 0, 0, 0.72),
+               0 4px 12px -4px rgba(0, 0, 0, 0.40);
+  --ring-focus: 0 0 0 2px var(--color-ink),
+                0 0 0 4px rgba(87, 201, 230, 0.55);
+
+  /* ---------------------------------------------------------
+     TYPOGRAPHY
+     --------------------------------------------------------- */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, monospace;
+
+  --tracking-label: 0.14em;
+  --tracking-tight: -0.02em;
+  --tracking-display: -0.025em;
+
+  /* ---------------------------------------------------------
+     MOTION
+     --------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --transition-fast: 150ms var(--ease-out);
+  --transition-normal: 260ms var(--ease-out);
+  --transition-slow: 480ms var(--ease-out);
+
+  /* ---------------------------------------------------------
+     LAYOUT
+     --------------------------------------------------------- */
+  --shell-header: 68px;
+  --measure: 68ch;
+  --content-max: 1180px;
+}
+
+/* Honour the operating system preference everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 1ms linear;
+    --transition-normal: 1ms linear;
+    --transition-slow: 1ms linear;
+  }
+}

@@ -271,7 +271,7 @@ export function ValidatePage() {
         <div className="validate-shell">
           <Panel
             style={{
-              borderColor: 'rgba(226, 91, 91, 0.3)',
+              borderColor: 'rgba(255, 107, 107, 0.32)',
               borderLeftWidth: '2px',
               borderLeftColor: 'var(--color-danger)',
               padding: 'var(--space-6)',
@@ -431,7 +431,7 @@ export function ValidatePage() {
           <Panel
             className="ab-rise"
             style={{
-              borderColor: 'rgba(43, 174, 158, 0.32)',
+              borderColor: 'rgba(35, 196, 184, 0.34)',
               borderLeftWidth: '2px',
               borderLeftColor: 'var(--color-teal)',
               padding: 'var(--space-5) var(--space-6)',
@@ -744,7 +744,7 @@ export function ValidatePage() {
                 display:
                   'flex',
                 gap:
-                  'var(--space-6)',
+                  'var(--space-5)',
                 flexShrink:
                   0,
               }}

@@ -8,6 +8,7 @@ export async function apiClient<T>(
   endpoint: string,
   options?: RequestInit,
   timeoutMs = 15000,
+  externalSignal?: AbortSignal,
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
@@ -23,7 +24,7 @@ export async function apiClient<T>(
       'Content-Type': 'application/json',
       ...options?.headers,
     },
-    signal: controller.signal,
+    signal: externalSignal ?? controller.signal,
   };
 
   const config: RequestInit = {
@@ -55,6 +56,8 @@ export async function apiClient<T>(
 
     throw error;
   } finally {
-    window.clearTimeout(timeoutId);
+    if (!externalSignal) {
+      window.clearTimeout(timeoutId);
+    }
   }
 }

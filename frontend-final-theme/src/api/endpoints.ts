@@ -77,8 +77,16 @@ export const api = {
       undefined,
       120000,
     ),
-  getHealth: () =>
-    apiClient<HealthResponse>('/api/health', undefined, 5000),
+  getHealth: (
+    timeoutMs = 5000,
+    signal?: AbortSignal,
+  ) =>
+    apiClient<HealthResponse>(
+      import.meta.env.VITE_HEALTH_ENDPOINT || '/api/health',
+      undefined,
+      timeoutMs,
+      signal,
+    ),
 
   getMetadata: () =>
     apiClient<MetadataResponse>('/api/metadata'),

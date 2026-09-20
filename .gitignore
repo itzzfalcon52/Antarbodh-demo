@@ -207,3 +207,23 @@ copernicus_catalogue.txt
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+
+# ============================================================
+# ANTARBODH BACKEND-V2 DEPLOYMENT ARTIFACTS
+# ============================================================
+
+!backend-v2/data/
+!backend-v2/data/argo/
+!backend-v2/data/argo/argo.csv
+
+!backend-v2/data/historical/
+!backend-v2/data/historical/antarbodh_2025_predictions.nc
+
+!backend-v2/data/model/
+!backend-v2/data/model/antarbodh_cnn_v1_sih2026.pt
+
+!backend-v2/data/validation/
+!backend-v2/data/validation/argo_glorys_comparison_report.json
+
+!backend-v2/data/inference_inputs.nc

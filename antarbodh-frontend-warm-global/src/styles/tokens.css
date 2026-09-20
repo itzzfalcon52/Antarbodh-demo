@@ -1,0 +1,135 @@
+/* =========================================================
+   ANTARBODH — WARM EDITORIAL / INSTRUMENT SYSTEM
+   Warm terracotta, umber and parchment replace the cool
+   interface chrome. The map keeps its original ocean palette.
+   ========================================================= */
+
+:root {
+  /* SURFACES */
+  --color-abyss: #160B07;
+  --color-ink: #1D0F09;
+  --color-deep: #25140C;
+  --color-panel: #2B190F;
+  --color-panel-light: #3A2315;
+  --color-shelf: #4A2B1A;
+
+  --surface-sunken: #211109;
+  --surface-raised: #342014;
+  --surface-hover: #412719;
+  --surface-scrim: #26150E;
+
+  --scrim-soft: rgba(22, 11, 7, 0.72);
+  --scrim-strong: rgba(22, 11, 7, 0.86);
+  --scrim-chip: rgba(22, 11, 7, 0.90);
+
+  --sheen: rgba(242, 229, 215, 0.05);
+  --sheen-soft: rgba(242, 229, 215, 0.025);
+
+  /* LINES */
+  --color-border: #6E4326;
+  --color-border-strong: #8A5734;
+  --color-border-faint: #4B2D1B;
+  --scrollbar-thumb: #6E4326;
+  --scrollbar-thumb-hover: #98603A;
+
+  /* TEXT */
+  --color-text: #F2E5D7;
+  --color-text-muted: #CFAF91;
+  --color-text-subtle: #A98160;
+  --color-text-faint: #76553D;
+  --color-on-accent: #24140B;
+
+  /* WARM ACCENTS */
+  --color-ocean: #C86B2B;
+  --color-ocean-bright: #F0A45F;
+  --color-ocean-deep: #91471D;
+  --color-teal: #C08A5B;
+  --color-sand: #E0C49C;
+  --color-sand-soft: rgba(224, 196, 156, 0.12);
+
+  --wash-ocean: rgba(200, 107, 43, 0.12);
+  --wash-ocean-strong: rgba(200, 107, 43, 0.20);
+  --wash-teal: rgba(192, 138, 91, 0.13);
+  --wash-danger: rgba(188, 91, 67, 0.13);
+
+  /* STATUS — intentionally warm rather than dashboard-neon */
+  --color-warning: #D79A55;
+  --color-danger: #C46D56;
+  --color-success: #C08A5B;
+
+  /* CHART CHROME */
+  --grid-line: rgba(201, 157, 118, 0.14);
+  --grid-line-faint: rgba(201, 157, 118, 0.07);
+  --axis-line: rgba(218, 171, 129, 0.34);
+
+  /* Global UI depth language is now a solid warm accent. */
+  --depth-upper: #E8A16A;
+  --depth-thermocline: #C86B2B;
+  --depth-deep: #7E3D1B;
+  --depth-line-deep: #A95725;
+  --gradient-depth: var(--color-ocean);
+
+  --gradient-abyss: var(--color-ink);
+  --gradient-ambient: none;
+
+  /* HEADER — solid, no glass treatment */
+  --header-bg: #24130C;
+  --sheet-bg: #24130C;
+
+  /* SPACING */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+  --space-10: 64px;
+  --space-12: 96px;
+
+  /* RADII — restrained, more instrument panel than SaaS card */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 999px;
+
+  /* ELEVATION — low contrast, no glow */
+  --shadow-xs: 0 1px 2px rgba(12, 6, 3, 0.34);
+  --shadow-sm: 0 1px 3px rgba(12, 6, 3, 0.40), 0 1px 1px rgba(12, 6, 3, 0.24);
+  --shadow-md: 0 8px 24px -12px rgba(12, 6, 3, 0.66), 0 2px 6px -2px rgba(12, 6, 3, 0.34);
+  --shadow-lg: 0 24px 56px -24px rgba(12, 6, 3, 0.72), 0 4px 12px -4px rgba(12, 6, 3, 0.40);
+  --shadow-text: 0 2px 16px rgba(12, 6, 3, 0.86);
+  --ring-focus: 0 0 0 2px var(--color-ink), 0 0 0 4px rgba(240, 164, 95, 0.62);
+
+  /* TYPOGRAPHY */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --tracking-label: 0.14em;
+  --tracking-tight: -0.02em;
+  --tracking-display: -0.025em;
+
+  /* MOTION — restrained */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --transition-fast: 150ms var(--ease-out);
+  --transition-normal: 240ms var(--ease-out);
+  --transition-slow: 420ms var(--ease-out);
+
+  /* LAYOUT */
+  --shell-header: 68px;
+  --measure: 68ch;
+  --content-max: 1180px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 1ms linear;
+    --transition-normal: 1ms linear;
+    --transition-slow: 1ms linear;
+  }
+}

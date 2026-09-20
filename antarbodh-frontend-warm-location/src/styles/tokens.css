@@ -1,0 +1,207 @@
+/* =========================================================
+   ANTARBODH — DESIGN TOKENS
+   Ocean-depth scientific visual system.
+   Names from the original system are preserved so that
+   every existing consumer keeps working unchanged.
+   ========================================================= */
+
+:root {
+  /* ---------------------------------------------------------
+     SURFACES — sunlit surface to abyss, all true ocean navy
+     --------------------------------------------------------- */
+  --color-abyss: #020B1A;
+  --color-ink: #05142B;
+  --color-deep: #0A2145;
+  --color-panel: #0B2445;
+  --color-panel-light: #103158;
+  --color-shelf: #16406E;
+
+  /* Layered translucency used for insets and overlays */
+  --surface-sunken: rgba(2, 11, 26, 0.55);
+  --surface-raised: rgba(120, 186, 255, 0.05);
+  --surface-hover: rgba(120, 186, 255, 0.09);
+  --surface-scrim: rgba(4, 17, 38, 0.76);
+
+  /* Scrims used over maps and visualizations */
+  --scrim-soft: rgba(2, 11, 26, 0.50);
+  --scrim-strong: rgba(2, 11, 26, 0.68);
+  --scrim-chip: rgba(2, 11, 26, 0.82);
+
+  /* Neutral sheen for skeletons and top-edge highlights */
+  --sheen: rgba(198, 228, 255, 0.07);
+  --sheen-soft: rgba(198, 228, 255, 0.035);
+
+  /* ---------------------------------------------------------
+     LINES — blue-tinted, never neutral grey
+     --------------------------------------------------------- */
+  --color-border: rgba(93, 173, 255, 0.18);
+  --color-border-strong: rgba(93, 173, 255, 0.34);
+  --color-border-faint: rgba(93, 173, 255, 0.10);
+
+  --scrollbar-thumb: rgba(93, 173, 255, 0.22);
+  --scrollbar-thumb-hover: rgba(93, 173, 255, 0.40);
+
+  /* ---------------------------------------------------------
+     TEXT — white through to desaturated blue-grey
+     --------------------------------------------------------- */
+  --color-text: #EAF4FF;
+  --color-text-muted: #A8C6E6;
+  --color-text-subtle: #7B9EC4;
+  --color-text-faint: #55799F;
+
+  /* Reads on top of a bright accent fill */
+  --color-on-accent: #04162E;
+
+  /* ---------------------------------------------------------
+     ACCENTS
+     --------------------------------------------------------- */
+  --color-ocean: #2D8FF0;
+  --color-ocean-bright: #5AD2F5;
+  --color-ocean-deep: #1657A8;
+  --color-teal: #23C4B8;
+
+  /* Warm neutral — reserved for emphasis, never decoration */
+  --color-sand: #E0C49C;
+  --color-sand-soft: rgba(224, 196, 156, 0.14);
+
+  /* Accent washes */
+  --wash-ocean: rgba(45, 143, 240, 0.12);
+  --wash-ocean-strong: rgba(45, 143, 240, 0.24);
+  --wash-teal: rgba(35, 196, 184, 0.14);
+  --wash-danger: rgba(255, 107, 107, 0.12);
+
+  /* ---------------------------------------------------------
+     STATUS
+     --------------------------------------------------------- */
+  --color-warning: #E5B155;
+  --color-danger: #FF6B6B;
+  --color-success: #23C4B8;
+
+  /* ---------------------------------------------------------
+     VISUALIZATION CHROME
+     Axis and grid lines for charts. These frame the data;
+     they never encode it.
+     --------------------------------------------------------- */
+  --grid-line: rgba(122, 176, 232, 0.11);
+  --grid-line-faint: rgba(122, 176, 232, 0.055);
+  --axis-line: rgba(122, 176, 232, 0.34);
+
+  /* ---------------------------------------------------------
+     DEPTH GRADIENT — the vertical language of the product
+     sunlight -> surface blue -> deep ocean -> abyss
+     --------------------------------------------------------- */
+  --depth-upper: #63E0F5;
+  --depth-thermocline: #2D8FF0;
+  --depth-deep: #123C7A;
+  --depth-line-deep: #2A6FB8;
+  --gradient-depth: linear-gradient(
+    180deg,
+    var(--depth-upper) 0%,
+    var(--depth-thermocline) 42%,
+    var(--depth-deep) 100%
+  );
+
+  /* Ambient field used behind full-bleed sections */
+  --gradient-abyss: radial-gradient(
+      120% 90% at 12% -10%,
+      rgba(45, 143, 240, 0.20) 0%,
+      rgba(45, 143, 240, 0) 58%
+    ),
+    radial-gradient(
+      100% 80% at 100% 0%,
+      rgba(90, 210, 245, 0.12) 0%,
+      rgba(90, 210, 245, 0) 55%
+    ),
+    var(--color-ink);
+
+  /* Ambient field behind the whole shell */
+  --gradient-ambient: radial-gradient(
+    90% 60% at 50% -12%,
+    rgba(45, 143, 240, 0.16) 0%,
+    rgba(45, 143, 240, 0) 60%
+  );
+
+  /* Header */
+  --header-bg: linear-gradient(
+    180deg,
+    rgba(10, 33, 69, 0.96) 0%,
+    rgba(10, 33, 69, 0.86) 100%
+  );
+  --sheet-bg: rgba(4, 17, 38, 0.95);
+
+  /* ---------------------------------------------------------
+     SPACING — 4 / 8 rhythm
+     --------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+  --space-10: 64px;
+  --space-12: 96px;
+
+  /* ---------------------------------------------------------
+     RADII
+     --------------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-full: 999px;
+
+  /* ---------------------------------------------------------
+     ELEVATION — low contrast, no glow
+     --------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(2, 8, 20, 0.36);
+  --shadow-sm: 0 1px 3px rgba(2, 8, 20, 0.40),
+               0 1px 1px rgba(2, 8, 20, 0.26);
+  --shadow-md: 0 8px 24px -12px rgba(2, 8, 20, 0.66),
+               0 2px 6px -2px rgba(2, 8, 20, 0.38);
+  --shadow-lg: 0 24px 56px -24px rgba(2, 8, 20, 0.76),
+               0 4px 12px -4px rgba(2, 8, 20, 0.44);
+  --shadow-text: 0 2px 16px rgba(2, 8, 20, 0.88);
+  --ring-focus: 0 0 0 2px var(--color-ink),
+                0 0 0 4px rgba(90, 210, 245, 0.6);
+
+  /* ---------------------------------------------------------
+     TYPOGRAPHY
+     --------------------------------------------------------- */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, monospace;
+
+  --tracking-label: 0.14em;
+  --tracking-tight: -0.02em;
+  --tracking-display: -0.025em;
+
+  /* ---------------------------------------------------------
+     MOTION
+     --------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --transition-fast: 150ms var(--ease-out);
+  --transition-normal: 260ms var(--ease-out);
+  --transition-slow: 480ms var(--ease-out);
+
+  /* ---------------------------------------------------------
+     LAYOUT
+     --------------------------------------------------------- */
+  --shell-header: 68px;
+  --measure: 68ch;
+  --content-max: 1180px;
+}
+
+/* Honour the operating system preference everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 1ms linear;
+    --transition-normal: 1ms linear;
+    --transition-slow: 1ms linear;
+  }
+}

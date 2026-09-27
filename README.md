@@ -210,15 +210,17 @@ $$
 \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{RMSE}} + \lambda_{\text{phys}} \mathcal{L}_{\text{phys}} + \lambda_{\text{grad}} \mathcal{L}_{\text{thermocline}}
 $$
 
-* **1. Masked Ocean RMSE Loss**:
-  $$
-  \mathcal{L}_{\text{RMSE}} = \sqrt{ \frac{1}{\sum M_{i,j}} \sum_{z=1}^{15} \sum_{i,j} M_{i,j} \left( \hat{T}_{z,i,j} - T_{z,i,j}^{\text{target}} \right)^2 }
-  $$
+**1. Masked Ocean RMSE Loss:**
 
-* **2. Vertical Thermal Stratification Regularizer**:
-  $$
-  \mathcal{L}_{\text{phys}} = \frac{1}{14} \sum_{k=1}^{14} \left\| \left( \frac{\partial \hat{T}}{\partial z} \right)_k - \left( \frac{\partial T^{\text{target}}}{\partial z} \right)_k \right\|_2^2
-  $$
+$$
+\mathcal{L}_{\text{RMSE}} = \sqrt{ \frac{1}{\sum M_{i,j}} \sum_{z=1}^{15} \sum_{i,j} M_{i,j} \left( \hat{T}_{z,i,j} - T_{z,i,j}^{\text{target}} \right)^2 }
+$$
+
+**2. Vertical Thermal Stratification Regularizer:**
+
+$$
+\mathcal{L}_{\text{phys}} = \frac{1}{14} \sum_{k=1}^{14} \left\| \left( \frac{\partial \hat{T}}{\partial z} \right)_k - \left( \frac{\partial T^{\text{target}}}{\partial z} \right)_k \right\|_2^2
+$$
 
 ---
 

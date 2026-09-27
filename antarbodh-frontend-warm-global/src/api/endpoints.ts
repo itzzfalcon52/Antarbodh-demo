@@ -111,8 +111,11 @@ export const api = {
       mode === 'predict' ? 120000 : 30000,
     ),
 
+  // 30 s so a cold start on the hosted backend does not time out.
   getValidationReport: () =>
     apiClient<ValidationReportResponse>(
       '/api/validation/report',
+      undefined,
+      30000,
     ),
 };

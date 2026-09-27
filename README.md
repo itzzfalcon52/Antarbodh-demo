@@ -144,11 +144,11 @@ AntarBodh introduces an **instantaneous AI surrogate pipeline** capable of daily
 ### 🗺️ 1. Interactive 3D Ocean Subsurface Explorer
 * **15 Standard Depth Slices**: Seamless exploration from surface to abyss (`0m`, `5m`, `10m`, `20m`, `30m`, `50m`, `75m`, `100m`, `125m`, `150m`, `200m`, `300m`, `500m`, `700m`, `1000m`).
 * **Dynamic Colormaps**: Hardware-accelerated temperature shaders (Thermal, Bathymetric, Saline, Turbid) with custom isotherm contouring.
-* **Instant Column Inspection**: Click any coordinate across the North Indian Ocean to inspect real-time vertical temperature profiles and Mixed Layer Depth ($T_0 - 0.2^\circ\text{C}$).
+* **Instant Column Inspection**: Click any coordinate across the North Indian Ocean to inspect real-time vertical temperature profiles and Mixed Layer Depth (threshold $\Delta T = 0.2^\circ\text{C}$).
 
 ### 🔮 2. Real-Time Deep Learning Predict Mode
 * **Instant Inverse Inference**: Enter custom satellite surface boundary parameters (SST, SSS, SLA, Currents $u/v$, Winds $u/v$) to synthesize vertical temperature soundings in **38 ms**.
-* **Thermocline Extraction**: Automatically pinpoints the upper mixed layer base and the core thermocline maximum gradient zone ($75\text{m} - 200\text{m}$).
+* **Thermocline Extraction**: Automatically pinpoints the upper mixed layer base and the core thermocline maximum gradient zone (75 m – 200 m).
 
 ### 🎯 3. Independent In-Situ ARGO Ground-Truth Benchmark
 * **Same-Observation Spatiotemporal Matcher**: Evaluates model performance against 201,942 individual observations from 1,383 real-world Argo profiling floats.
@@ -164,11 +164,16 @@ AntarBodh introduces an **instantaneous AI surrogate pipeline** capable of daily
 ## 🧠 OceanEmbed AI Engine & Mathematical Formulation
 
 ### 1. The Inverse Reconstruction Formulation
-Ocean interior temperature $T(z, y, x)$ is reconstructed from observable surface states $S(y, x)$ via a deep learned operator $\mathcal{F}_{\theta}$:
 
-$$S(y, x) = \Big\{ \text{SST}(y,x),\, \text{SSS}(y,x),\, \text{SSH}(y,x),\, u_{curr}(y,x),\, v_{curr}(y,x),\, u_{wind}(y,x),\, v_{wind}(y,x) \Big\}$$
+Ocean interior temperature $T(z, y, x)$ is reconstructed from observable surface states $S(y, x)$ via a deep learned neural operator $\mathcal{F}_{\theta}$:
 
-$$\hat{T}(z, y, x) = \mathcal{F}_{\theta}\Big(S(y, x),\, \text{Lat}_{norm}(y, x),\, \text{Lon}_{norm}(y, x)\Big) \quad \text{for } z \in \mathcal{Z}_{15}$$
+$$
+S(y, x) = \left[ \text{SST}(y,x),\, \text{SSS}(y,x),\, \text{SSH}(y,x),\, u_{\text{curr}}(y,x),\, v_{\text{curr}}(y,x),\, u_{\text{wind}}(y,x),\, v_{\text{wind}}(y,x) \right]
+$$
+
+$$
+\hat{T}(z, y, x) = \mathcal{F}_{\theta}\left(S(y, x),\, \text{Lat}_{\text{norm}}(y, x),\, \text{Lon}_{\text{norm}}(y, x)\right) \quad \text{for } z \in \mathcal{Z}_{15}
+$$
 
 ```
 Input Tensor: (B, 9, 60, 80)
@@ -198,14 +203,22 @@ Output Tensor: (B, 15, 60, 80) ──► Reconstructed 3D Subsurface Temperature
 ```
 
 ### 2. Physics-Regularized Loss Function
+
 Pure data-driven MSE losses often violate hydrostatic and thermal stratification laws. AntarBodh minimizes a compound physics-guided objective:
 
-$$\mathcal{L}_{total} = \mathcal{L}_{masked\_RMSE} + \lambda_{phys} \mathcal{L}_{phys} + \lambda_{grad} \mathcal{L}_{thermocline}$$
+$$
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{RMSE}} + \lambda_{\text{phys}} \mathcal{L}_{\text{phys}} + \lambda_{\text{grad}} \mathcal{L}_{\text{thermocline}}
+$$
 
-1. **Masked Ocean RMSE**:
-   $$\mathcal{L}_{masked\_RMSE} = \sqrt{\frac{1}{\sum M_{i,j}} \sum_{z=1}^{15} \sum_{i,j} M_{i,j} \left( \hat{T}_{z,i,j} - T_{z,i,j}^{target} \right)^2}$$
-2. **Vertical Thermal Stratification Regularizer**:
-   $$\mathcal{L}_{phys} = \frac{1}{14} \sum_{k=1}^{14} \left\| \left( \frac{\partial \hat{T}}{\partial z} \right)_k - \left( \frac{\partial T^{target}}{\partial z} \right)_k \right\|_2^2$$
+* **1. Masked Ocean RMSE Loss**:
+  $$
+  \mathcal{L}_{\text{RMSE}} = \sqrt{ \frac{1}{\sum M_{i,j}} \sum_{z=1}^{15} \sum_{i,j} M_{i,j} \left( \hat{T}_{z,i,j} - T_{z,i,j}^{\text{target}} \right)^2 }
+  $$
+
+* **2. Vertical Thermal Stratification Regularizer**:
+  $$
+  \mathcal{L}_{\text{phys}} = \frac{1}{14} \sum_{k=1}^{14} \left\| \left( \frac{\partial \hat{T}}{\partial z} \right)_k - \left( \frac{\partial T^{\text{target}}}{\partial z} \right)_k \right\|_2^2
+  $$
 
 ---
 
@@ -333,7 +346,10 @@ ANTARBODH-DEMO/
 | **In-Situ Validation** | International Argo GDAC / INCOIS | Point Profiles | Real-Time | `TEMP_ADJUSTED`, `PSAL_ADJUSTED` |
 
 ### 2. Standard Vertical Depth Levels (15 Levels)
-$$\mathcal{Z} = \{0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000\}\,\text{meters}$$
+
+$$
+\mathcal{Z}_{15} = \{0,\, 5,\, 10,\, 20,\, 30,\, 50,\, 75,\, 100,\, 125,\, 150,\, 200,\, 300,\, 500,\, 700,\, 1000\}\text{ meters}
+$$
 
 ---
 

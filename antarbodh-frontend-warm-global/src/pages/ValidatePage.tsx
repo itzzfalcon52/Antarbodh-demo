@@ -4,10 +4,6 @@ import {
   useState,
 } from 'react';
 
-import { Panel } from '../components/ui/Panel';
-import { Badge } from '../components/ui/Badge';
-import { MetricCard } from '../components/ui/MetricCard';
-import { SectionHeading } from '../components/ui/SectionHeading';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
 import { ValidationCharts } from '../components/validate/ValidationCharts';
@@ -16,8 +12,11 @@ import { api } from '../api/endpoints';
 
 import type {
   ValidationDepthMetrics,
+  ValidationOverallMetrics,
   ValidationReportResponse,
 } from '../types/api';
+
+import '../styles/validate.css';
 
 
 function formatNumber(
@@ -48,76 +47,53 @@ function formatSigned(
     return '—';
   }
 
-  return `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`;
+  return `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(digits)}`;
 }
 
 
-function MetricRow({
-  label,
-  value,
-  unit = '',
-  signed = false,
-}: {
-  label: string;
-  value: number | null | undefined;
-  unit?: string;
+/** The report calls it `correlation`; older reports used `corr`. */
+function overallCorrelation(m: ValidationOverallMetrics): number {
+  return m.correlation ?? m.corr ?? Number.NaN;
+}
+
+
+type MetricKey = 'rmse' | 'mae' | 'bias' | 'corr';
+type Winner = 'a' | 'g' | 'tie';
+
+/** Which of two scores is better for a metric (no new statistics). */
+function better(metric: MetricKey, a: number, g: number): Winner {
+  if (!Number.isFinite(a) || !Number.isFinite(g) || a === g) return 'tie';
+
+  if (metric === 'corr') return a > g ? 'a' : 'g';
+  if (metric === 'bias') return Math.abs(a) < Math.abs(g) ? 'a' : 'g';
+  return a < g ? 'a' : 'g';
+}
+
+
+const METRICS: {
+  key: MetricKey;
+  name: string;
+  rule: string;
+  phrase: string;
+  unit: string;
   signed?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        gap: 'var(--space-4)',
-        padding: '10px 0',
-        borderBottom:
-          '1px solid var(--color-border-faint)',
-      }}
-    >
-      <span
-        className="label-scientific"
-        style={{ fontSize: '0.5875rem' }}
-      >
-        {label}
-      </span>
+}[] = [
+  { key: 'rmse', name: 'RMSE', rule: 'Lower is better', phrase: 'lower RMSE', unit: ' °C' },
+  { key: 'mae', name: 'MAE', rule: 'Lower is better', phrase: 'lower MAE', unit: ' °C' },
+  { key: 'bias', name: 'Bias', rule: 'Closer to zero is better', phrase: 'smaller bias', unit: ' °C', signed: true },
+  { key: 'corr', name: 'Correlation', rule: 'Higher is better', phrase: 'higher correlation', unit: '' },
+];
 
-      <span
-        className="data-numeric"
-        style={{
-          color:
-            'var(--color-text)',
-          fontSize: '0.9rem',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {signed
-          ? formatSigned(value)
-          : formatNumber(value)}
-        {unit}
-      </span>
-    </div>
-  );
+
+function joinPhrases(parts: string[]): string {
+  if (parts.length <= 1) return parts.join('');
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 }
 
 
-function SectionTitle({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="label-scientific label-scientific--bright"
-      style={{
-        marginBottom: 'var(--space-4)',
-        paddingBottom: 'var(--space-3)',
-        borderBottom: '1px solid var(--color-border-faint)',
-      }}
-    >
-      {children}
-    </div>
-  );
+function joinDepths(depths: number[]): string {
+  const labels = depths.map((d) => d.toLocaleString('en-IN'));
+  return `${joinPhrases(labels)} m`;
 }
 
 
@@ -140,6 +116,9 @@ export function ValidatePage() {
     setError,
   ] = useState<string | null>(null);
 
+  const [activeDepth, setActiveDepth] =
+    useState<number | null>(null);
+
 
   // ================================================================
   // LOAD VALIDATION REPORT
@@ -156,17 +135,8 @@ export function ValidatePage() {
         setLoading(true);
         setError(null);
 
-        console.log(
-          '[VALIDATION] Loading validation report...'
-        );
-
         const response =
           await api.getValidationReport();
-
-        console.log(
-          '[VALIDATION] Report response:',
-          response,
-        );
 
         if (cancelled) {
           return;
@@ -235,48 +205,27 @@ export function ValidatePage() {
 
 
   // ================================================================
-  // LOADING STATE
+  // LOADING / ERROR
   // ================================================================
 
   if (loading) {
-
     return (
-      <div className="validate-page">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-          }}
-        >
+      <div className="validate-page neel-page">
+        <div className="va-centre">
           <LoadingState
-            message="Loading validation report"
-            detail="Matching ANTARBODH and GLORYS against independent ARGO observations."
+            message="Loading the validation report"
+            detail="Matching Antarbodh and GLORYS against independent Argo observations."
           />
         </div>
       </div>
     );
   }
 
-
-  // ================================================================
-  // ERROR STATE
-  // ================================================================
-
   if (error || !report) {
-
     return (
-      <div className="validate-page">
+      <div className="validate-page neel-page">
         <div className="validate-shell">
-          <Panel
-            style={{
-              borderColor: 'var(--color-danger)',
-              borderLeftWidth: '2px',
-              borderLeftColor: 'var(--color-danger)',
-              padding: 'var(--space-6)',
-            }}
-          >
+          <div className="surface va-error">
             <ErrorState
               title="Validation report unavailable"
               message={
@@ -284,37 +233,41 @@ export function ValidatePage() {
                 'The validation report could not be loaded.'
               }
             />
-
-            <div
-              style={{
-                marginTop: 'var(--space-5)',
-                padding: 'var(--space-3) var(--space-4)',
-                background: 'var(--surface-sunken)',
-                border: '1px solid var(--color-border-faint)',
-                borderRadius: 'var(--radius-md)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.7rem',
-                lineHeight: 1.7,
-                color: 'var(--color-text-faint)',
-                textAlign: 'center',
-              }}
-            >
-              API endpoint
-              <br />
-              GET /api/validation/report
-            </div>
-          </Panel>
+            <p className="va-error__endpoint">
+              Requested from <code>GET /api/validation/report</code>.
+              Check that the backend is running.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
 
-  const antarbodh =
-    report.antarbodh_vs_argo;
+  const antarbodh = report.antarbodh_vs_argo;
+  const glorys = report.glorys_vs_argo;
 
-  const glorys =
-    report.glorys_vs_argo;
+  const overall: Record<MetricKey, { a: number; g: number }> = {
+    rmse: { a: antarbodh.rmse, g: glorys.rmse },
+    mae: { a: antarbodh.mae, g: glorys.mae },
+    bias: { a: antarbodh.bias, g: glorys.bias },
+    corr: { a: overallCorrelation(antarbodh), g: overallCorrelation(glorys) },
+  };
+
+  const winners = METRICS.map((m) => ({
+    ...m,
+    ...overall[m.key],
+    winner: better(m.key, overall[m.key].a, overall[m.key].g),
+  }));
+
+  const gloryBetter = winners.filter((m) => m.winner === 'g').map((m) => m.phrase);
+  const antarbodhBetter = winners.filter((m) => m.winner === 'a').map((m) => m.phrase);
+
+  const lowerRmseDepths = depthMetrics
+    .filter((m) => better('rmse', m.antarbodh_rmse, m.glorys_rmse) === 'a')
+    .map((m) => m.depth);
+
+  const sample = report.sample;
 
 
   // ================================================================
@@ -322,793 +275,266 @@ export function ValidatePage() {
   // ================================================================
 
   return (
-    <div className="validate-page">
-
+    <div className="validate-page neel-page">
       <div className="validate-shell">
 
-        {/* ========================================================
-            HEADER
-        ======================================================== */}
-
-        <header className="validate-header ab-rise">
-
-          <div className="label-scientific">
-            Validation
-          </div>
-
-          <h1 className="display display--sm">
-            Independent subsurface <em>validation</em>
-          </h1>
-
-          <p className="lede" style={{ marginTop: 'var(--space-4)' }}>
-            ANTARBODH is evaluated against independent ARGO
-            temperature observations at matched locations and
-            depths. GLORYS is shown as a same-observation
-            reference benchmark.
+        {/* HEADER */}
+        <header className="va-head ab-rise">
+          <p className="kicker" lang="hi">सत्यापन</p>
+          <h1 className="page-title">Independent validation</h1>
+          <p className="page-lede">
+            Antarbodh is compared with independent Argo float
+            measurements at matched places, dates and depths. GLORYS,
+            the reanalysis Antarbodh learned from, is scored on exactly
+            the same observations as a reference.
           </p>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: 'var(--space-2)',
-              marginTop: 'var(--space-5)',
-              flexWrap: 'wrap',
-            }}
-          >
-            <Badge dot>Independent observation · ARGO</Badge>
-            <Badge dot>Reference · GLORYS</Badge>
-            <Badge variant="ocean" dot>Same matched sample</Badge>
-          </div>
-
+          {(report.period || report.argo_source) && (
+            <p className="va-head__source">
+              {[report.period, report.argo_source].filter(Boolean).join(' · ')}
+            </p>
+          )}
         </header>
 
 
-        {/* ========================================================
-            MATCHED SAMPLE
-        ======================================================== */}
-
-        <Panel
-          className="ab-rise"
-          style={{
-            marginBottom: 'var(--space-6)',
-            padding: 'var(--space-5) var(--space-6)',
-          }}
-        >
-          <SectionHeading
-            index="01"
-            title="Matched sample"
-            rule
-            style={{ marginBottom: 'var(--space-5)' }}
-          />
-
-          <div className="metric-strip">
-            <MetricCard
-              label="Matched observations"
-              value={report.sample
-                .common_matched_observations
-                .toLocaleString()}
-              note="Common matched temperature observations"
-            />
-
-            <MetricCard
-              label="Matched profiles"
-              value={report.sample
-                .matched_profiles
-                .toLocaleString()}
-              note="Independent ARGO profiles"
-            />
-
-            <MetricCard
-              label="Matched floats"
-              value={report.sample
-                .matched_floats
-                .toLocaleString()}
-              note="Distinct ARGO platforms"
-            />
+        {/* MATCHED SAMPLE */}
+        <section className="va-sample ab-rise" aria-label="Matched sample">
+          <div>
+            <p className="va-sample__value">
+              {sample.common_matched_observations.toLocaleString('en-IN')}
+            </p>
+            <p className="va-sample__label">
+              matched temperature observations
+            </p>
           </div>
-        </Panel>
-
-
-        {/* ========================================================
-            OVERALL METRICS
-        ======================================================== */}
-
-        <div
-          style={{
-            display:
-              'grid',
-            gridTemplateColumns:
-              'repeat(2, minmax(0, 1fr))',
-            gap:
-              'var(--space-6)',
-            marginBottom:
-              'var(--space-6)',
-          }}
-        >
-
-          {/* ANTARBODH */}
-
-          <Panel
-            className="ab-rise"
-            style={{
-              borderColor: 'var(--color-border-strong)',
-              borderLeftWidth: '2px',
-              borderLeftColor: 'var(--color-teal)',
-              padding: 'var(--space-5) var(--space-6)',
-            }}
-          >
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                gap: 'var(--space-3)',
-                marginBottom: 'var(--space-4)',
-                paddingBottom: 'var(--space-3)',
-                borderBottom: '1px solid var(--color-border-faint)',
-              }}
-            >
-
-              <div
-                className="label-scientific"
-                style={{ color: 'var(--color-teal)' }}
-              >
-                ANTARBODH vs ARGO
-              </div>
-
-              <Badge variant="default">Model</Badge>
-
-            </div>
-
-            <MetricRow
-              label="RMSE"
-              value={antarbodh.rmse}
-              unit=" °C"
-            />
-
-            <MetricRow
-              label="MAE"
-              value={antarbodh.mae}
-              unit=" °C"
-            />
-
-            <MetricRow
-              label="BIAS"
-              value={antarbodh.bias}
-              unit=" °C"
-              signed
-            />
-
-            <MetricRow
-              label="CORRELATION"
-              value={antarbodh.corr}
-            />
-
-          </Panel>
-
-
-          {/* GLORYS */}
-
-          <Panel
-            className="ab-rise"
-            style={{ padding: 'var(--space-5) var(--space-6)' }}
-          >
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                gap: 'var(--space-3)',
-                marginBottom: 'var(--space-4)',
-                paddingBottom: 'var(--space-3)',
-                borderBottom: '1px solid var(--color-border-faint)',
-              }}
-            >
-
-              <div className="label-scientific">
-                GLORYS vs ARGO
-              </div>
-
-              <Badge variant="default">Reference</Badge>
-
-            </div>
-
-            <MetricRow
-              label="RMSE"
-              value={glorys.rmse}
-              unit=" °C"
-            />
-
-            <MetricRow
-              label="MAE"
-              value={glorys.mae}
-              unit=" °C"
-            />
-
-            <MetricRow
-              label="BIAS"
-              value={glorys.bias}
-              unit=" °C"
-              signed
-            />
-
-            <MetricRow
-              label="CORRELATION"
-              value={glorys.corr}
-            />
-
-          </Panel>
-
-        </div>
-
-
-        {/* ========================================================
-            QUICK METRIC INTERPRETATION
-        ======================================================== */}
-
-        <Panel
-          style={{
-            marginBottom:
-              'var(--space-6)',
-          }}
-        >
-
-          <SectionTitle>
-            OVERALL VALIDATION METRICS
-          </SectionTitle>
-
-          <div
-            style={{
-              color:
-                'var(--color-text-subtle)',
-              fontSize:
-                '0.8rem',
-              lineHeight:
-                1.65,
-            }}
-          >
-            On the common matched observation
-            sample, ANTARBODH records an overall
-            RMSE of{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatNumber(
-                antarbodh.rmse,
-                4,
-              )} °C
-            </strong>
-            , MAE of{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatNumber(
-                antarbodh.mae,
-                4,
-              )} °C
-            </strong>
-            , bias of{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatSigned(
-                antarbodh.bias,
-                4,
-              )} °C
-            </strong>
-            , and Pearson correlation of{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatNumber(
-                antarbodh.corr,
-                4,
-              )}
-            </strong>
-            .
+          <div>
+            <p className="va-sample__value">
+              {sample.matched_profiles.toLocaleString('en-IN')}
+            </p>
+            <p className="va-sample__label">independent Argo profiles</p>
           </div>
-
-          <div
-            style={{
-              marginTop:
-                'var(--space-3)',
-              color:
-                'var(--color-text-subtle)',
-              fontSize:
-                '0.8rem',
-              lineHeight:
-                1.65,
-            }}
-          >
-            For the same matched sample, the
-            corresponding GLORYS reference metrics
-            are RMSE{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatNumber(
-                glorys.rmse,
-                4,
-              )} °C
-            </strong>
-            , MAE{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatNumber(
-                glorys.mae,
-                4,
-              )} °C
-            </strong>
-            , bias{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatSigned(
-                glorys.bias,
-                4,
-              )} °C
-            </strong>
-            , and correlation{' '}
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              {formatNumber(
-                glorys.corr,
-                4,
-              )}
-            </strong>
-            .
+          <div>
+            <p className="va-sample__value">
+              {sample.matched_floats.toLocaleString('en-IN')}
+            </p>
+            <p className="va-sample__label">distinct Argo floats</p>
           </div>
-
-        </Panel>
-
-
-        {/* ========================================================
-            DEPTH-RESOLVED CHARTS
-        ======================================================== */}
-
-        <Panel
-          style={{
-            marginBottom:
-              'var(--space-6)',
-          }}
-        >
-
-          <div
-            style={{
-              display:
-                'flex',
-              justifyContent:
-                'space-between',
-              alignItems:
-                'flex-end',
-              gap:
-                'var(--space-4)',
-              marginBottom:
-                'var(--space-6)',
-            }}
-          >
-
-            <div>
-
-              <SectionTitle>
-                DEPTH-RESOLVED VALIDATION
-              </SectionTitle>
-
-              <div
-                style={{
-                  color:
-                    'var(--color-text-subtle)',
-                  fontSize:
-                    '0.78rem',
-                  lineHeight:
-                    1.5,
-                }}
-              >
-                Error and correlation statistics
-                across the 15 ANTARBODH target
-                depths.
-              </div>
-
-            </div>
-
-            <div
-              style={{
-                display:
-                  'flex',
-                gap:
-                  'var(--space-5)',
-                flexShrink:
-                  0,
-              }}
-            >
-
-              <div
-                style={{
-                  display:
-                    'flex',
-                  alignItems:
-                    'center',
-                  gap:
-                    '8px',
-                }}
-              >
-
-                <span
-                  style={{
-                    width:
-                      '18px',
-                    height:
-                      '3px',
-                    background:
-                      'var(--color-teal)',
-                    display:
-                      'inline-block',
-                  }}
-                />
-
-                <span
-                  className="label-scientific"
-                  style={{
-                    fontSize:
-                      '0.68rem',
-                  }}
-                >
-                  ANTARBODH
-                </span>
-
-              </div>
+        </section>
 
 
-              <div
-                style={{
-                  display:
-                    'flex',
-                  alignItems:
-                    'center',
-                  gap:
-                    '8px',
-                }}
-              >
+        {/* OVERALL SCORES */}
+        <section className="surface va-block ab-rise">
+          <h2 className="block-title">
+            Overall scores
+            <small>Same matched sample for both</small>
+          </h2>
 
-                <span
-                  style={{
-                    width:
-                      '18px',
-                    borderTop:
-                      '2px dashed var(--color-text-subtle)',
-                    display:
-                      'inline-block',
-                  }}
-                />
+          <table className="va-scores">
+            <thead>
+              <tr>
+                <th scope="col">Metric</th>
+                <th scope="col" className="is-a">Antarbodh</th>
+                <th scope="col" className="is-g">GLORYS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {winners.map(({ key, name, rule, unit, signed, a, g, winner }) => (
+                <tr key={key}>
+                  <th scope="row">
+                    {name}
+                    <span>{rule}</span>
+                  </th>
+                  <td className="is-a" data-better={winner === 'a'}>
+                    {signed ? formatSigned(a, 3) : formatNumber(a, key === 'corr' ? 4 : 3)}
+                    <span className="va-scores__unit">{unit}</span>
+                  </td>
+                  <td className="is-g" data-better={winner === 'g'}>
+                    {signed ? formatSigned(g, 3) : formatNumber(g, key === 'corr' ? 4 : 3)}
+                    <span className="va-scores__unit">{unit}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-                <span
-                  className="label-scientific"
-                  style={{
-                    fontSize:
-                      '0.68rem',
-                    color:
-                      'var(--color-text-subtle)',
-                  }}
-                >
-                  GLORYS
-                </span>
+          <p className="va-summary">
+            {gloryBetter.length > 0 && (
+              <>On this sample, GLORYS has the {joinPhrases(gloryBetter)}</>
+            )}
+            {gloryBetter.length > 0 && antarbodhBetter.length > 0 && '; '}
+            {antarbodhBetter.length > 0 && (
+              <>
+                {gloryBetter.length === 0 ? 'On this sample, ' : ''}
+                Antarbodh has the {joinPhrases(antarbodhBetter)}
+              </>
+            )}
+            {(gloryBetter.length > 0 || antarbodhBetter.length > 0) && '. '}
+            The marked value in each row is the better of the two.
+          </p>
+        </section>
 
-              </div>
 
-            </div>
+        {/* BY DEPTH */}
+        <section className="surface va-block ab-rise">
+          <h2 className="block-title">
+            By depth
+            <small>Hover a chart to compare one depth</small>
+          </h2>
 
+          <div className="va-legend">
+            <span className="va-legend__item">
+              <span aria-hidden="true" className="va-legend__swatch va-legend__swatch--a" />
+              Antarbodh (A)
+            </span>
+            <span className="va-legend__item">
+              <span aria-hidden="true" className="va-legend__swatch va-legend__swatch--g" />
+              GLORYS reference (G)
+            </span>
+            {lowerRmseDepths.length > 0 && (
+              <span className="va-legend__note">
+                Antarbodh&rsquo;s RMSE is lower than GLORYS&rsquo;s at{' '}
+                {lowerRmseDepths.length === depthMetrics.length
+                  ? 'every depth'
+                  : joinDepths(lowerRmseDepths)}
+                .
+              </span>
+            )}
           </div>
 
           <ValidationCharts
             metrics={depthMetrics}
+            activeDepth={activeDepth}
+            onActiveDepthChange={setActiveDepth}
           />
+        </section>
 
-        </Panel>
 
-
-        {/* ========================================================
-            DEPTH TABLE
-        ======================================================== */}
-
-        <Panel
-          className="ab-rise"
-          style={{
-            marginBottom: 'var(--space-6)',
-            padding: 'var(--space-5) var(--space-6)',
-          }}
-        >
-
-          <SectionHeading
-            index="04"
-            title="Metrics by depth"
-            description="A· = ANTARBODH, G· = GLORYS, evaluated on the same matched ARGO sample."
-            rule
-            style={{ marginBottom: 'var(--space-5)' }}
-          />
+        {/* DEPTH TABLE */}
+        <section className="surface va-block ab-rise">
+          <h2 className="block-title">
+            Metrics by depth
+            <small>A = Antarbodh, G = GLORYS</small>
+          </h2>
 
           <div className="table-scroll">
-            <table className="data-table data-table--metrics">
-
+            <table className="data-table data-table--metrics va-table">
               <thead>
                 <tr>
                   <th scope="col" className="is-left">Depth</th>
-                  <th scope="col">N</th>
-                  <th scope="col" className="is-model">A-RMSE</th>
-                  <th scope="col">G-RMSE</th>
-                  <th scope="col" className="is-model">A-MAE</th>
-                  <th scope="col">G-MAE</th>
-                  <th scope="col" className="is-model">A-BIAS</th>
-                  <th scope="col">G-BIAS</th>
-                  <th scope="col" className="is-model">A-R</th>
-                  <th scope="col">G-R</th>
+                  <th scope="col">Observations</th>
+                  <th scope="col" className="is-model">A RMSE</th>
+                  <th scope="col">G RMSE</th>
+                  <th scope="col" className="is-model">A MAE</th>
+                  <th scope="col">G MAE</th>
+                  <th scope="col" className="is-model">A bias</th>
+                  <th scope="col">G bias</th>
+                  <th scope="col" className="is-model">A r</th>
+                  <th scope="col">G r</th>
                 </tr>
               </thead>
 
               <tbody>
-                {depthMetrics.map(
-                  (metric) => (
+                {depthMetrics.map((metric) => {
+                  const rmse = better('rmse', metric.antarbodh_rmse, metric.glorys_rmse);
+                  const mae = better('mae', metric.antarbodh_mae, metric.glorys_mae);
+                  const bias = better('bias', metric.antarbodh_bias, metric.glorys_bias);
+                  const corr = better('corr', metric.antarbodh_corr, metric.glorys_corr);
 
-                    <tr key={metric.depth}>
-
+                  return (
+                    <tr
+                      key={metric.depth}
+                      data-active={metric.depth === activeDepth}
+                      onMouseEnter={() => setActiveDepth(metric.depth)}
+                      onMouseLeave={() => setActiveDepth(null)}
+                    >
                       <th scope="row" className="is-left is-depth">
-                        {metric.depth}
+                        {metric.depth.toLocaleString('en-IN')}
                         <span className="unit"> m</span>
                       </th>
-
-                      <td className="is-count">
-                        {metric.n_obs.toLocaleString()}
-                      </td>
-
-                      <td className="is-model">
-                        {formatNumber(
-                          metric.antarbodh_rmse,
-                          3,
-                        )}
-                      </td>
-
-                      <td>
-                        {formatNumber(
-                          metric.glorys_rmse,
-                          3,
-                        )}
-                      </td>
-
-                      <td className="is-model">
-                        {formatNumber(
-                          metric.antarbodh_mae,
-                          3,
-                        )}
-                      </td>
-
-                      <td>
-                        {formatNumber(
-                          metric.glorys_mae,
-                          3,
-                        )}
-                      </td>
-
-                      <td className="is-model">
-                        {formatSigned(
-                          metric.antarbodh_bias,
-                          3,
-                        )}
-                      </td>
-
-                      <td>
-                        {formatSigned(
-                          metric.glorys_bias,
-                          3,
-                        )}
-                      </td>
-
-                      <td className="is-model">
-                        {formatNumber(
-                          metric.antarbodh_corr,
-                          3,
-                        )}
-                      </td>
-
-                      <td>
-                        {formatNumber(
-                          metric.glorys_corr,
-                          3,
-                        )}
-                      </td>
-
+                      <td className="is-count">{metric.n_obs.toLocaleString('en-IN')}</td>
+                      <td className="is-model" data-better={rmse === 'a'}>{formatNumber(metric.antarbodh_rmse, 3)}</td>
+                      <td data-better={rmse === 'g'}>{formatNumber(metric.glorys_rmse, 3)}</td>
+                      <td className="is-model" data-better={mae === 'a'}>{formatNumber(metric.antarbodh_mae, 3)}</td>
+                      <td data-better={mae === 'g'}>{formatNumber(metric.glorys_mae, 3)}</td>
+                      <td className="is-model" data-better={bias === 'a'}>{formatSigned(metric.antarbodh_bias, 3)}</td>
+                      <td data-better={bias === 'g'}>{formatSigned(metric.glorys_bias, 3)}</td>
+                      <td className="is-model" data-better={corr === 'a'}>{formatNumber(metric.antarbodh_corr, 3)}</td>
+                      <td data-better={corr === 'g'}>{formatNumber(metric.glorys_corr, 3)}</td>
                     </tr>
-
-                  )
-                )}
+                  );
+                })}
               </tbody>
-
             </table>
           </div>
 
-        </Panel>
+          <p className="va-footnote">
+            In each pair, the better value is shown brighter with a dot.
+          </p>
+        </section>
 
 
-        {/* ========================================================
-            METHODOLOGY
-        ======================================================== */}
+        {/* METHOD */}
+        <section className="va-method ab-rise">
+          <h2 className="block-title">How the check works</h2>
 
-        <Panel
-          className="ab-rise"
-          style={{
-            marginBottom: 'var(--space-6)',
-            padding: 'var(--space-5) var(--space-6)',
-          }}
-        >
-
-          <SectionHeading
-            index="05"
-            title="Validation methodology"
-            rule
-            style={{ marginBottom: 'var(--space-5)' }}
-          />
-
-          <div className="method-steps">
-
-            {[
-              {
-                step: '01',
-                title: 'ARGO',
-                body:
-                  'Independent in-situ temperature observations from ARGO profiles provide the observational reference.',
-              },
-              {
-                step: '02',
-                title: 'Matching',
-                body:
-                  'ANTARBODH and GLORYS are evaluated against the same matched ARGO observations.',
-              },
-              {
-                step: '03',
-                title: 'Depth',
-                body:
-                  'ANTARBODH predictions are compared at the observation depths represented in the validation procedure.',
-              },
-            ].map(({ step, title, body }) => (
-
-              <div key={step} className="method-step">
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    gap: 'var(--space-3)',
-                    marginBottom: 'var(--space-2)',
-                  }}
-                >
-                  <span className="label-index">{step}</span>
-
-                  <span className="label-scientific label-scientific--bright">
-                    {title}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    color: 'var(--color-text-subtle)',
-                    fontSize: '0.8rem',
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {body}
-                </div>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        </Panel>
+          <ol className="va-steps">
+            <li>
+              <span className="va-steps__n">1</span>
+              <h3>Argo as ground truth</h3>
+              <p>
+                Independent temperature profiles from Argo floats provide
+                the observed reference. Argo is never a model input.
+              </p>
+            </li>
+            <li>
+              <span className="va-steps__n">2</span>
+              <h3>Same observations for both</h3>
+              <p>
+                Antarbodh and GLORYS are scored against exactly the same
+                matched Argo observations, so the comparison is fair.
+              </p>
+            </li>
+            <li>
+              <span className="va-steps__n">3</span>
+              <h3>Depth by depth</h3>
+              <p>
+                Reconstructions are compared at the observation depths
+                used in the validation procedure, then summarised per
+                standard depth.
+              </p>
+            </li>
+          </ol>
+        </section>
 
 
-        {/* ========================================================
-            PROVENANCE
-        ======================================================== */}
+        {/* PROVENANCE */}
+        <section className="surface va-block ab-rise">
+          <h2 className="block-title">Where the data comes from</h2>
 
-        <Panel
-          className="ab-rise"
-          style={{ padding: 'var(--space-5) var(--space-6)' }}
-        >
-
-          <SectionHeading
-            index="06"
-            title="Data provenance"
-            rule
-            style={{ marginBottom: 'var(--space-5)' }}
-          />
-
-          <div
-            style={{
-              padding: 'var(--space-5)',
-              background: 'var(--surface-sunken)',
-              border: '1px solid var(--color-border-faint)',
-              borderLeft: '2px solid var(--color-ocean)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--color-text-muted)',
-              fontSize: '0.8rem',
-              lineHeight: 1.7,
-              maxWidth: '78ch',
-            }}
-          >
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              ANTARBODH
-            </strong>
-            {' '}
-            reconstructs subsurface temperature
-            from surface observations using the
-            trained CNN model.
-            <br />
-            <br />
-
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              GLORYS
-            </strong>
-            {' '}
-            provides the supervised
-            training/reference field and is included
-            here as a same-observation benchmark.
-            <br />
-            <br />
-
-            <strong
-              style={{
-                color:
-                  'var(--color-text)',
-              }}
-            >
-              ARGO
-            </strong>
-            {' '}
-            provides the independent observational
-            validation reference.
-          </div>
-
-        </Panel>
+          <dl className="va-sources">
+            <div>
+              <dt>Antarbodh</dt>
+              <dd>
+                Reconstructs subsurface temperature from surface
+                observations using the trained CNN model.
+              </dd>
+            </div>
+            <div>
+              <dt>GLORYS</dt>
+              <dd>
+                The supervised training and reference field, included
+                here as a same-observation benchmark.
+              </dd>
+            </div>
+            <div>
+              <dt>Argo</dt>
+              <dd>
+                The independent observational validation reference.
+              </dd>
+            </div>
+          </dl>
+        </section>
 
       </div>
-
     </div>
   );
 }

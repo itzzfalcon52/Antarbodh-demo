@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 import { AntarbodhMark } from '../branding/AntarbodhMark';
@@ -109,7 +110,9 @@ export function Header() {
             minWidth: 0,
           }}
         >
-          <div
+          <Link
+            to="/"
+            aria-label="ANTARBODH home"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -120,35 +123,18 @@ export function Header() {
             <AntarbodhMark />
 
             <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: '0.9375rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  lineHeight: 1.1,
-                  color: 'var(--color-text)',
-                }}
-              >
-                ANTARBODH
+              <div className="app-brand__name">
+                Antarbodh
+                <span className="app-brand__deva" lang="hi">
+                  अंतर्बोध
+                </span>
               </div>
 
-              <div
-                style={{
-                  marginTop: '2px',
-                  fontSize: '0.5875rem',
-                  fontWeight: 560,
-                  color: 'var(--color-text-faint)',
-                  letterSpacing: 'var(--tracking-label)',
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <div className="app-brand__tagline">
                 Subsurface Ocean Intelligence
               </div>
             </div>
-          </div>
+          </Link>
 
           <div
             aria-hidden="true"

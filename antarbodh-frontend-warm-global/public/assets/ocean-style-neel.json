@@ -1,0 +1,37 @@
+{
+  "version": 8,
+  "name": "ANTARBODH Neel Style",
+  "sources": {
+    "basemap": {
+      "type": "geojson",
+      "data": "/assets/countries.geojson"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#0C1342"
+      }
+    },
+    {
+      "id": "land",
+      "type": "fill",
+      "source": "basemap",
+      "paint": {
+        "fill-color": "#262D66"
+      }
+    },
+    {
+      "id": "coastline",
+      "type": "line",
+      "source": "basemap",
+      "paint": {
+        "line-color": "#F1D9A8",
+        "line-width": 0.9,
+        "line-opacity": 0.5
+      }
+    }
+  ]
+}

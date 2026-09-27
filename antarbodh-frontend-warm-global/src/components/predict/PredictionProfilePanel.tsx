@@ -1,156 +1,116 @@
-import type { ProfileResponse } from '../../types/api';
-import { TemperatureProfile } from '../explore/TemperatureProfile';
-import { SectionHeading } from '../ui/SectionHeading';
-import { formatTemperature } from '../../lib/formatting';
+import { useState } from 'react';
 
-export function PredictionProfilePanel({ profile }: { profile: ProfileResponse }) {
+import {
+  DEPTH_GROUPS,
+  temperatureColor,
+  type CoolingLayer,
+  type ProfileLevel,
+} from '../../lib/profileStats';
+import { ProfileChart } from './ProfileChart';
+
+interface PredictionProfilePanelProps {
+  levels: ProfileLevel[];
+  cooling: CoolingLayer | null;
+}
+
+/**
+ * The chart and the level table share one "active depth": hovering
+ * or focusing either one highlights the same level in both.
+ */
+export function PredictionProfilePanel({
+  levels,
+  cooling,
+}: PredictionProfilePanelProps) {
+  const [activeDepth, setActiveDepth] = useState<number | null>(null);
+
+  const temps = levels.map((l) => l.temp);
+  const min = Math.min(...temps);
+  const max = Math.max(...temps);
+
+  const inCooling = (depth: number) =>
+    cooling !== null && (depth === cooling.from.depth || depth === cooling.to.depth);
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        minHeight: 0,
-      }}
-    >
-      <SectionHeading
-        index="02"
-        title="Vertical profile"
-        trailing={
-          <span
-            className="label-scientific"
-            style={{ fontSize: '0.5625rem', color: 'var(--color-text-faint)' }}
-          >
-            0 – 1000 m
-          </span>
-        }
-        rule
-        style={{ marginBottom: 'var(--space-5)' }}
-      />
-
-      <div
-        className="predict-profile-split"
-        style={{ flex: 1, minHeight: 0 }}
-      >
-        {/* SVG Profile - reuse explore component */}
-        <div
-          style={{
-            flex: '1.6 1 0',
-            position: 'relative',
-            minWidth: 0,
-            minHeight: '280px',
-            padding: 'var(--space-2) 0',
-          }}
-        >
-          <TemperatureProfile profile={profile} selectedDepth={-1} />
-        </div>
-
-        {/* Tabular Readout */}
-        <div
-          style={{
-            flex: '1 1 0',
-            minWidth: '180px',
-            overflowY: 'auto',
-            borderLeft: '1px solid var(--color-border-faint)',
-            paddingLeft: 'var(--space-5)',
-          }}
-        >
-          <div
-            style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 1,
-              display: 'flex',
-              justifyContent: 'space-between',
-              paddingBottom: 'var(--space-2)',
-              borderBottom: '1px solid var(--color-border)',
-              marginBottom: 'var(--space-2)',
-              backgroundColor: 'var(--color-panel)',
-            }}
-          >
-            <span className="label-scientific">Depth</span>
-            <span className="label-scientific">Temp (°C)</span>
-          </div>
-
-          {profile.depths_m.map((d, i) => (
-            <div
-              key={d}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                padding: '5px 0',
-                borderBottom: '1px solid var(--color-border-faint)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.78rem',
-                fontVariantNumeric: 'tabular-nums',
-                color: 'var(--color-text-muted)',
-              }}
-            >
-              <span>
-                {d}
-                <span style={{ color: 'var(--color-text-faint)', marginLeft: '2px' }}>
-                  m
-                </span>
-              </span>
-
-              <span style={{ color: 'var(--color-ocean-bright)' }}>
-                {formatTemperature(profile.temperature_degC[i])}
-              </span>
-            </div>
-          ))}
-        </div>
+    <div className="pr-body">
+      <div className="pr-chart-wrap">
+        <ProfileChart
+          levels={levels}
+          cooling={cooling}
+          activeDepth={activeDepth}
+          onActiveDepthChange={setActiveDepth}
+        />
       </div>
 
-      {/* Provenance */}
-      <div
-        style={{
-          borderTop: '1px solid var(--color-border-faint)',
-          paddingTop: 'var(--space-4)',
-          marginTop: 'var(--space-4)',
-          fontSize: '0.6875rem',
-          color: 'var(--color-text-subtle)',
-        }}
-      >
-        {[
-          ['Model', 'ANTARBODH CNN v1'],
-          [
-            'Mode',
-            profile.mode === 'historical'
-              ? 'Historical / Cached'
-              : 'On-demand model reconstruction',
-          ],
-          ['Output', '15 depth levels · 0–1000 m'],
-        ].map(([label, value]) => (
-          <div
-            key={label}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              gap: 'var(--space-3)',
-              padding: '3px 0',
-            }}
-          >
-            <span
-              className="label-scientific"
-              style={{ fontSize: '0.5625rem' }}
-            >
-              {label}
-            </span>
+      <div className="pr-table-wrap">
+        <table className="pr-table">
+          <caption className="pr-sr">
+            Reconstructed temperature at each standard depth
+          </caption>
 
-            <span
-              className="data-numeric"
-              style={{
-                color: 'var(--color-text-muted)',
-                fontSize: '0.6875rem',
-                textAlign: 'right',
-              }}
-            >
-              {value}
-            </span>
-          </div>
-        ))}
+          <thead>
+            <tr>
+              <th scope="col">Depth</th>
+              <th scope="col" aria-hidden="true" />
+              <th scope="col" className="is-num">
+                °C
+              </th>
+            </tr>
+          </thead>
+
+          {DEPTH_GROUPS.map((group) => {
+            const rows = levels.filter((l) =>
+              (group.depths as readonly number[]).includes(l.depth),
+            );
+            if (!rows.length) return null;
+
+            return (
+              <tbody key={group.title}>
+                <tr className="pr-table__group">
+                  <th scope="rowgroup" colSpan={3}>
+                    {group.title}
+                  </th>
+                </tr>
+
+                {rows.map(({ depth, temp }) => {
+                  const color = temperatureColor(temp, min, max);
+                  const share = max > min ? (temp - min) / (max - min) : 1;
+
+                  return (
+                    <tr
+                      key={depth}
+                      tabIndex={0}
+                      data-active={depth === activeDepth}
+                      data-cooling={inCooling(depth)}
+                      onMouseEnter={() => setActiveDepth(depth)}
+                      onMouseLeave={() => setActiveDepth(null)}
+                      onFocus={() => setActiveDepth(depth)}
+                      onBlur={() => setActiveDepth(null)}
+                    >
+                      <th scope="row">
+                        {depth.toLocaleString('en-IN')}
+                        <span className="pr-unit"> m</span>
+                      </th>
+                      <td aria-hidden="true" className="pr-table__bar-cell">
+                        <span className="pr-bar">
+                          <span
+                            className="pr-bar__fill"
+                            style={{
+                              width: `${8 + share * 92}%`,
+                              background: color,
+                            }}
+                          />
+                        </span>
+                      </td>
+                      <td className="is-num" style={{ color }}>
+                        {temp.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            );
+          })}
+        </table>
       </div>
     </div>
   );

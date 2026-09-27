@@ -8,6 +8,7 @@ import type { ExpressionSpecification } from 'maplibre-gl';
 
 import type { TemperatureFieldResponse } from '../../types/api';
 import { DOMAIN } from '../../lib/constants';
+import { TEMPERATURE_STOPS } from '../../lib/mapColors';
 
 type TemperatureProperties = {
   temperature: number | null;
@@ -201,17 +202,10 @@ export function createGridGeoJSON(): FeatureCollection<
   };
 }
 
-export const temperatureColorScale: ExpressionSpecification = [
+// Stops live in lib/mapColors so the legend and profile chart match.
+export const temperatureColorScale = [
   'interpolate',
   ['linear'],
   ['get', 'temperature'],
-  0, '#313695',
-  4, '#4575b4',
-  8, '#74add1',
-  12, '#abd9e9',
-  16, '#e0f3f8',
-  20, '#fee090',
-  24, '#fdae61',
-  28, '#f46d43',
-  32, '#d73027',
-];
+  ...TEMPERATURE_STOPS.flat(),
+] as unknown as ExpressionSpecification;

@@ -1,12 +1,11 @@
-import { Crosshair } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import type { ProfileResponse, ArgoProfileResponse } from '../../types/api';
-import { TemperatureProfile } from './TemperatureProfile';
-import { SectionHeading } from '../ui/SectionHeading';
-import {
-  formatCoordinate,
-  formatTemperature,
-} from '../../lib/formatting';
+import { ProfileChart } from '../predict/ProfileChart';
+import { formatCoordinate } from '../../lib/formatting';
+import { mapTemperatureColor } from '../../lib/mapColors';
+import { steepestCooling, validLevels } from '../../lib/profileStats';
+import { formatDay, seasonFor } from '../../lib/seasons';
 
 interface LocationPanelProps {
   location: { lat: number; lon: number } | null;
@@ -17,44 +16,33 @@ interface LocationPanelProps {
   argoProfile: ArgoProfileResponse | null;
   argoLoading: boolean;
   loading: boolean;
+  /** Clicking a level on the profile switches the map to it. */
+  onDepthChange?: (depth: number) => void;
 }
 
-/** Small key/value line used throughout the panel. */
-function MetaRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        gap: 'var(--space-3)',
-        padding: '4px 0',
-      }}
-    >
-      <span
-        className="label-scientific"
-        style={{ fontSize: '0.5625rem' }}
-      >
-        {label}
-      </span>
+const fmt = (value: number | null | undefined, digits = 2) =>
+  value === null || value === undefined ? '—' : value.toFixed(digits);
 
-      <span
-        className="data-numeric"
-        style={{
-          fontSize: '0.6875rem',
-          color: 'var(--color-text-muted)',
-          textAlign: 'right',
-        }}
-      >
-        {value}
-      </span>
-    </div>
+/** A kolam-style dot grid with a looped path around a centre point. */
+function KolamTarget() {
+  const dots = [];
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      dots.push(<circle key={`${r}-${c}`} cx={12 + c * 18} cy={12 + r * 18} r={2} />);
+    }
+  }
+
+  return (
+    <svg className="ex-kolam" viewBox="0 0 96 96" aria-hidden="true">
+      <g className="ex-kolam__dots">{dots}</g>
+      {/* Quatrefoil: four r=14 arcs centred on the dots N, E, S and W
+          of the centre, joined at their outer intersections. */}
+      <path
+        className="ex-kolam__loop"
+        d="M34.9 34.9A14 14 0 1 1 61.1 34.9A14 14 0 1 1 61.1 61.1A14 14 0 1 1 34.9 61.1A14 14 0 1 1 34.9 34.9Z"
+      />
+      <circle className="ex-kolam__centre" cx="48" cy="48" r="5" />
+    </svg>
   );
 }
 
@@ -67,556 +55,206 @@ export function LocationPanel({
   argoProfile,
   argoLoading,
   loading,
+  onDepthChange,
 }: LocationPanelProps) {
+  const [hoverDepth, setHoverDepth] = useState<number | null>(null);
+
+  const levels = useMemo(
+    () => (profile ? validLevels(profile.depths_m, profile.temperature_degC) : []),
+    [profile],
+  );
+
+  const cooling = useMemo(() => steepestCooling(levels), [levels]);
+
   if (!location) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          gap: 'var(--space-4)',
-          padding: 'var(--space-6) var(--space-4)',
-          color: 'var(--color-text-subtle)',
-        }}
-      >
-        <div
-          aria-hidden="true"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            border: '1px solid var(--color-border)',
-            backgroundColor: 'var(--surface-raised)',
-            color: 'var(--color-ocean)',
-          }}
-        >
-          <Crosshair size={18} />
-        </div>
-
-        <div>
-          <div
-            className="label-scientific label-scientific--bright"
-            style={{ marginBottom: 'var(--space-2)' }}
-          >
-            Select a location
-          </div>
-
-          <div
-            style={{
-              fontSize: '0.8rem',
-              lineHeight: 1.65,
-              maxWidth: '26ch',
-              margin: '0 auto',
-            }}
-          >
-            Click anywhere in the Bay of Bengal to inspect
-            the subsurface ocean.
-          </div>
-        </div>
+      <div className="location-panel ex-empty">
+        <KolamTarget />
+        <h2 className="ex-empty__title">Pick a point on the map</h2>
+        <p className="ex-empty__body">
+          Click anywhere in the Bay of Bengal to see its temperature at
+          every depth, and how it compares with the nearest Argo float.
+        </p>
       </div>
     );
   }
 
-  const formattedDate = new Date(
-    `${date}T00:00:00Z`,
-  )
-    .toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'UTC',
-    })
-    .toUpperCase();
+  const season = seasonFor(date);
 
   /*
-   * The first profile value corresponds to the model's
-   * shallowest target depth (normally 0 m).
-   *
-   * IMPORTANT:
-   * This is NOT the raw SST observation.
-   * It is ANTARBODH's reconstructed temperature at 0 m.
+   * The first profile value corresponds to the model's shallowest
+   * target depth (normally 0 m). It is ANTARBODH's reconstruction,
+   * NOT the raw SST observation.
    */
-  const reconstructedSurfaceTemperature =
-    profile?.temperature_degC?.[0] ?? null;
+  const surface = levels[0] ?? null;
+
+  const observations = argoProfile?.available ? argoProfile.observations ?? [] : [];
+
+  const nearestArgo = observations.length
+    ? observations.reduce((best, obs) =>
+        Math.abs(obs.depth_m_approx - depth) < Math.abs(best.depth_m_approx - depth) ? obs : best,
+      )
+    : null;
+
+  const difference =
+    nearestArgo && temperature !== null ? temperature - nearestArgo.temperature_degC : null;
 
   return (
-    <div
-      className="location-panel"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        minHeight: 0,
-        overflowY: 'auto',
-        gap: 'var(--space-5)',
-        paddingRight: '2px',
-      }}
-    >
-      {/* -------------------------------------------------- */}
-      {/* Location Details */}
-      {/* -------------------------------------------------- */}
+    <div className="location-panel ex-inspect">
+      <header className="ex-inspect__head">
+        <p className="kicker" lang="hi">
+          चयनित बिंदु
+        </p>
+        <h2 className="ex-inspect__place">
+          {formatCoordinate(location.lat, 'lat')}, {formatCoordinate(location.lon, 'lon')}
+        </h2>
+        <p className="ex-inspect__when">
+          {formatDay(date)} · {season.name}
+        </p>
+      </header>
 
-      <div>
-        <SectionHeading
-          index="01"
-          title="Inspection point"
-          style={{ marginBottom: 'var(--space-3)' }}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 'var(--space-3)',
-          }}
-        >
-          <div className="data-numeric" style={{ fontSize: '0.8125rem', lineHeight: 1.6 }}>
-            <div>{formatCoordinate(location.lat, 'lat')}</div>
-            <div>{formatCoordinate(location.lon, 'lon')}</div>
-          </div>
-
-          <div
-            className="data-numeric"
-            style={{
-              textAlign: 'right',
-              fontSize: '0.6875rem',
-              color: 'var(--color-text-subtle)',
-              lineHeight: 1.6,
-            }}
-          >
-            {formattedDate}
-          </div>
-        </div>
-      </div>
-
-      {/* -------------------------------------------------- */}
-      {/* Selected Temperature */}
-      {/* -------------------------------------------------- */}
-
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 'var(--space-4)',
-          padding: 'var(--space-4)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--color-border-faint)',
-          backgroundColor: 'var(--location-surface-inset)',
-        }}
-      >
+      <div className="ex-reading">
         <div>
-          <div
-            className="label-scientific"
-            style={{ marginBottom: '5px', fontSize: '0.5625rem' }}
-          >
-            Depth
-          </div>
-
-          <div
-            className="data-numeric"
-            style={{ fontSize: '0.95rem' }}
-          >
-            {depth}
-            <span
-              style={{
-                marginLeft: '3px',
-                fontSize: '0.7rem',
-                color: 'var(--color-text-subtle)',
-              }}
-            >
-              m
-            </span>
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'right', minWidth: 0 }}>
-          <div
-            className="label-scientific"
-            style={{ marginBottom: '5px', fontSize: '0.5625rem' }}
-          >
-            Antarbodh temperature
-          </div>
-
-          <div
-            className="data-readout data-readout--accent"
-            style={{ fontSize: '1.65rem' }}
-          >
-            {formatTemperature(temperature)}
-          </div>
-        </div>
-      </div>
-
-      {/* -------------------------------------------------- */}
-      {/* Temperature Profile */}
-      {/* -------------------------------------------------- */}
-
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '260px',
-        }}
-      >
-        <SectionHeading
-          index="02"
-          title="Vertical profile"
-          style={{ marginBottom: 'var(--space-3)' }}
-        />
-
-        <div
-          style={{
-            flex: 1,
-            position: 'relative',
-            minHeight: '220px',
-          }}
-        >
-          {loading ? (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--space-3)',
-                color: 'var(--color-text-subtle)',
-              }}
-            >
-              <div
-                className="spinner"
-                aria-hidden="true"
-                style={{ width: '20px', height: '20px', borderWidth: '1.5px' }}
-              />
-
+          <p className="ex-reading__label">At {depth} m</p>
+          <p className="ex-reading__value">
+            {temperature !== null && (
               <span
-                className="label-scientific"
-                style={{ fontSize: '0.5625rem' }}
-              >
-                Loading profile
-              </span>
-            </div>
-          ) : profile ? (
-            <TemperatureProfile
-              profile={profile}
-              selectedDepth={depth}
-              theme="warm"
-            />
-          ) : (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--color-text-faint)',
-                fontSize: '0.78rem',
-              }}
-            >
-              Profile unavailable
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* -------------------------------------------------- */}
-      {/* Surface / Input Status */}
-      {/* -------------------------------------------------- */}
-
-      <div>
-        <SectionHeading
-          index="03"
-          title="Reconstructed surface"
-          style={{ marginBottom: 'var(--space-3)' }}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            gap: 'var(--space-3)',
-            fontSize: '0.75rem',
-            color: 'var(--color-text-subtle)',
-          }}
-        >
-          <span>ANTARBODH @ 0 m</span>
-
-          <span
-            className="data-numeric"
-            style={{ color: 'var(--color-text)', fontSize: '0.8125rem' }}
-          >
-            {reconstructedSurfaceTemperature !== null
-              ? formatTemperature(
-                reconstructedSurfaceTemperature,
-              )
-              : 'Unavailable'}
-          </span>
+                aria-hidden="true"
+                className="ex-swatch ex-swatch--lg"
+                style={{ background: mapTemperatureColor(temperature) }}
+              />
+            )}
+            {loading && temperature === null ? '…' : fmt(temperature)}
+            <span className="nl-unit"> °C</span>
+          </p>
         </div>
 
-        <div
-          style={{
-            marginTop: 'var(--space-2)',
-            fontSize: '0.6875rem',
-            lineHeight: 1.55,
-            color: 'var(--color-text-faint)',
-          }}
-        >
-          This value is the model reconstruction at
-          0 m. It is not the raw SST observation.
-        </div>
-      </div>
-
-      {/* -------------------------------------------------- */}
-      {/* Independent Validation */}
-      {/* -------------------------------------------------- */}
-
-      <div>
-        <SectionHeading
-          index="04"
-          title="Independent observation"
-          trailing={
-            <span
-              className="label-scientific"
-              style={{ fontSize: '0.5625rem', color: 'var(--color-text-faint)' }}
-            >
-              ARGO
-            </span>
-          }
-          style={{ marginBottom: 'var(--space-3)' }}
-        />
-
-        {argoLoading ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-2)',
-              fontSize: '0.75rem',
-              color: 'var(--color-text-subtle)',
-            }}
-          >
-            <span
-              className="spinner"
-              aria-hidden="true"
-              style={{
-                display: 'inline-block',
-                width: '11px',
-                height: '11px',
-                borderWidth: '1.5px',
-              }}
-            />
-            Searching ARGO observations
-          </div>
-        ) : argoProfile?.available ? (
-          <>
-            {/* ------------------------------------------------ */}
-            {/* Selected-depth comparison */}
-            {/* ------------------------------------------------ */}
-
-            {(() => {
-              const observations =
-                argoProfile.observations ?? [];
-
-              if (observations.length === 0) {
-                return (
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--color-text-subtle)',
-                    }}
-                  >
-                    ARGO profile has no valid temperatures
-                  </div>
-                );
-              }
-
-              const nearest = observations.reduce(
-                (best, observation) => {
-                  const bestDifference = Math.abs(
-                    best.depth_m_approx - depth,
-                  );
-
-                  const currentDifference = Math.abs(
-                    observation.depth_m_approx - depth,
-                  );
-
-                  return currentDifference < bestDifference
-                    ? observation
-                    : best;
-                },
-              );
-
-              return (
-                <>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 'var(--space-3)',
-                      padding: 'var(--space-3) 0',
-                      borderTop: '1px solid var(--color-border-faint)',
-                      borderBottom: '1px solid var(--color-border-faint)',
-                    }}
-                  >
-                    <div>
-                      <div
-                        className="label-scientific"
-                        style={{
-                          marginBottom: '5px',
-                          fontSize: '0.5625rem',
-                        }}
-                      >
-                        Antarbodh
-                      </div>
-
-                      <div
-                        className="data-numeric"
-                        style={{
-                          color: 'var(--color-ocean-bright)',
-                          fontSize: '0.95rem',
-                        }}
-                      >
-                        {formatTemperature(
-                          temperature,
-                        )}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: '3px',
-                          fontSize: '0.625rem',
-                          color: 'var(--color-text-faint)',
-                        }}
-                      >
-                        {depth} m
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'right' }}>
-                      <div
-                        className="label-scientific"
-                        style={{
-                          marginBottom: '5px',
-                          fontSize: '0.5625rem',
-                        }}
-                      >
-                        ARGO
-                      </div>
-
-                      <div
-                        className="data-numeric"
-                        style={{
-                          color: 'var(--color-text)',
-                          fontSize: '0.95rem',
-                        }}
-                      >
-                        {formatTemperature(
-                          nearest.temperature_degC,
-                        )}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: '3px',
-                          fontSize: '0.625rem',
-                          color: 'var(--color-text-faint)',
-                        }}
-                      >
-                        ~{nearest.depth_m_approx.toFixed(1)} m
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 'var(--space-2)' }}>
-                    <MetaRow
-                      label="Separation"
-                      value={
-                        argoProfile.distance_km !== undefined
-                          ? `${argoProfile.distance_km.toFixed(0)} km`
-                          : 'Unavailable'
-                      }
-                    />
-
-                    <MetaRow
-                      label="Observed"
-                      value={
-                        argoProfile.date_observed ??
-                        'Unavailable'
-                      }
-                    />
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: 'var(--space-2)',
-                      fontSize: '0.6875rem',
-                      lineHeight: 1.55,
-                      color: 'var(--color-text-faint)',
-                    }}
-                  >
-                    ARGO uses QC-1 temperature,
-                    prioritizing adjusted observations.
-                    ANTARBODH is independently compared
-                    against the observation.
-                  </div>
-                </>
-              );
-            })()}
-          </>
-        ) : (
-          <div
-            style={{
-              fontSize: '0.75rem',
-              lineHeight: 1.55,
-              color: 'var(--color-text-subtle)',
-            }}
-          >
-            {argoProfile?.reason ??
-              'No nearby ARGO observation'}
+        {depth !== 0 && surface && (
+          <div className="ex-reading__side">
+            <p className="ex-reading__label">Surface</p>
+            <p className="ex-reading__small">
+              {fmt(surface.temp)}
+              <span className="nl-unit"> °C</span>
+            </p>
           </div>
         )}
+      </div>
 
-        <div
-          style={{
-            marginTop: 'var(--space-2)',
-            fontSize: '0.6875rem',
-            lineHeight: 1.55,
-            color: 'var(--color-text-faint)',
-          }}
-        >
-          ARGO observations are used for independent
-          validation, not as model input.
+      <section className="ex-block">
+        <h3 className="ex-block__title">
+          Vertical profile
+          {onDepthChange && <span>Click a level to map it</span>}
+        </h3>
+
+        {loading ? (
+          <div className="ex-state">
+            <span className="spinner" aria-hidden="true" />
+            Loading profile
+          </div>
+        ) : levels.length >= 2 ? (
+          <ProfileChart
+            levels={levels}
+            cooling={cooling}
+            activeDepth={hoverDepth ?? depth}
+            onActiveDepthChange={setHoverDepth}
+            colorFor={mapTemperatureColor}
+            onDepthClick={onDepthChange}
+          />
+        ) : (
+          <div className="ex-state">Profile unavailable for this point.</div>
+        )}
+
+        <p className="ex-note">
+          All values are Antarbodh reconstructions, including 0 m; that
+          is not the raw satellite sea surface temperature.
+        </p>
+      </section>
+
+      <section className="ex-block">
+        <h3 className="ex-block__title">
+          Independent check
+          <span>Argo float</span>
+        </h3>
+
+        {argoLoading ? (
+          <div className="ex-state">
+            <span className="spinner" aria-hidden="true" />
+            Searching Argo observations
+          </div>
+        ) : nearestArgo ? (
+          <>
+            <div className="ex-compare">
+              <div>
+                <p className="ex-compare__who">Antarbodh</p>
+                <p className="ex-compare__value">{fmt(temperature)}°</p>
+                <p className="ex-compare__at">{depth} m</p>
+              </div>
+
+              <div className="ex-compare__delta" title="Antarbodh minus Argo">
+                {difference === null
+                  ? '—'
+                  : `${difference > 0 ? '+' : difference < 0 ? '−' : ''}${Math.abs(difference).toFixed(2)}°`}
+                <span>difference</span>
+              </div>
+
+              <div className="ex-compare__argo">
+                <p className="ex-compare__who">Argo</p>
+                <p className="ex-compare__value">{fmt(nearestArgo.temperature_degC)}°</p>
+                <p className="ex-compare__at">~{nearestArgo.depth_m_approx.toFixed(0)} m</p>
+              </div>
+            </div>
+
+            <dl className="ex-meta">
+              <div>
+                <dt>Distance</dt>
+                <dd>
+                  {argoProfile?.distance_km !== undefined
+                    ? `${argoProfile.distance_km.toFixed(0)} km`
+                    : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt>Observed</dt>
+                <dd>
+                  {argoProfile?.date_observed
+                    ? formatDay(argoProfile.date_observed.slice(0, 10))
+                    : '—'}
+                </dd>
+              </div>
+            </dl>
+
+            <p className="ex-note">
+              Argo quality-controlled (QC 1) temperature, adjusted values
+              preferred. Argo is never a model input.
+            </p>
+          </>
+        ) : (
+          <p className="ex-state ex-state--left">
+            {argoProfile?.available
+              ? 'The matched Argo profile has no valid temperatures.'
+              : argoProfile?.reason ?? 'No nearby Argo observation.'}
+          </p>
+        )}
+      </section>
+
+      <dl className="ex-meta ex-meta--foot">
+        <div>
+          <dt>Source</dt>
+          <dd>Antarbodh CNN v1</dd>
         </div>
-      </div>
-
-      {/* -------------------------------------------------- */}
-      {/* Provenance */}
-      {/* -------------------------------------------------- */}
-
-      <div
-        style={{
-          marginTop: 'auto',
-          paddingTop: 'var(--space-4)',
-          borderTop: '1px solid var(--color-border-faint)',
-        }}
-      >
-        <MetaRow label="Source" value="ANTARBODH CNN v1" />
-        <MetaRow label="Mode" value="Historical / Cached" />
-        <MetaRow label="Period" value="2025" />
-        <MetaRow label="Validation" value="ARGO / Independent" />
-      </div>
+        <div>
+          <dt>Mode</dt>
+          <dd>Historical, cached</dd>
+        </div>
+        <div>
+          <dt>Period</dt>
+          <dd>2025</dd>
+        </div>
+        <div>
+          <dt>Validation</dt>
+          <dd>Argo, independent</dd>
+        </div>
+      </dl>
     </div>
   );
 }

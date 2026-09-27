@@ -1,0 +1,1466 @@
+/* =========================================================
+   ANTARBODH — LANDING
+   The page reads as a dive. Warm paper and saffron at the top
+   stand for the sunlit surface; the page cools through the
+   thermocline into indigo (neel) and ends at 1,000 m.
+   Everything here is scoped to .landing so the app's warm
+   instrument theme is untouched.
+   ========================================================= */
+
+.landing {
+  /* Surface water */
+  --l-paper: #F8EEDC;
+  --l-paper-deep: #F1E1C2;
+  --l-card: #FDF8EE;
+  --l-ink: #2A1A0E;
+  --l-ink-muted: #5B4330;
+  --l-ink-faint: #876A52;
+  --l-line: rgba(90, 58, 30, 0.16);
+
+  /* Spice accents */
+  --l-kesar: #EE8A1E;
+  --l-kesar-hover: #F59B35;
+  --l-kesar-ink: #9A4A06;
+  --l-haldi: #F4B41A;
+
+  /* The deep */
+  --l-neel: #1B2566;
+  --l-neel-deep: #10174A;
+  --l-abyss: #080C27;
+  --l-moon: #EEEBF8;
+  --l-moon-muted: #B9BDE2;
+  --l-moon-faint: #8A8FC2;
+  --l-moon-line: rgba(185, 189, 226, 0.16);
+
+  --l-display: 'Eczar', 'Instrument Serif', Georgia, serif;
+  --l-body: 'Mukta', 'Inter', system-ui, sans-serif;
+
+  --l-wrap: 1120px;
+  --l-gutter: clamp(16px, 4vw, 40px);
+  --l-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* The brand mark reads its colours from these. */
+  --color-ocean-bright: var(--l-kesar);
+  --color-ocean: var(--l-neel);
+
+  position: relative;
+  min-height: 100%;
+  flex: none;
+  background: var(--l-paper);
+  color: var(--l-ink);
+  font-family: var(--l-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  font-feature-settings: normal;
+}
+
+html:has(.landing) {
+  scroll-behavior: smooth;
+  overscroll-behavior: auto;
+}
+
+html:has(.landing),
+html:has(.landing) body {
+  height: auto;
+  background: var(--l-abyss, #080C27);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing) {
+    scroll-behavior: auto;
+  }
+}
+
+.landing ::selection {
+  background: rgba(238, 138, 30, 0.28);
+  color: inherit;
+}
+
+.landing :focus-visible {
+  outline: 2px solid var(--l-kesar);
+  outline-offset: 3px;
+  box-shadow: none;
+  border-radius: 6px;
+}
+
+/* One class of specificity: enough to beat the app's global element
+   rules (typography.css), while component classes declared later in
+   this file still override these resets. */
+.landing :where(h1, h2, h3) {
+  font-family: var(--l-display);
+  color: inherit;
+  letter-spacing: -0.01em;
+}
+
+.landing :where(p) {
+  margin: 0;
+}
+
+.l-wrap {
+  width: 100%;
+  max-width: calc(var(--l-wrap) + var(--l-gutter) * 2);
+  margin: 0 auto;
+  padding: 0 var(--l-gutter);
+}
+
+.l-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.l-skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--l-ink);
+  color: var(--l-paper);
+}
+
+.l-skip:focus {
+  top: 16px;
+}
+
+/* ---------------------------------------------------------
+   BUTTONS
+   --------------------------------------------------------- */
+
+.l-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-family: var(--l-body);
+  font-size: 0.975rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 180ms var(--l-ease),
+    border-color 180ms var(--l-ease),
+    color 180ms var(--l-ease),
+    transform 180ms var(--l-ease);
+}
+
+.l-btn:active {
+  transform: translateY(1px);
+}
+
+.l-btn--lg {
+  min-height: 52px;
+  padding: 0 26px;
+  font-size: 1.05rem;
+}
+
+.l-btn--kesar {
+  background: var(--l-kesar);
+  color: #2A1504;
+}
+
+.l-btn--kesar:hover {
+  background: var(--l-kesar-hover);
+}
+
+.l-btn--ghost {
+  border-color: rgba(42, 26, 14, 0.28);
+  color: var(--l-ink);
+}
+
+.l-btn--ghost:hover {
+  border-color: var(--l-ink);
+  background: rgba(42, 26, 14, 0.04);
+}
+
+/* ---------------------------------------------------------
+   NAV — a floating pill that takes the tone of the water
+   --------------------------------------------------------- */
+
+.l-nav {
+  position: fixed;
+  top: 14px;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 0 var(--l-gutter);
+  pointer-events: none;
+}
+
+.l-nav__bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  max-width: var(--l-wrap);
+  margin: 0 auto;
+  padding: 8px 8px 8px 18px;
+  border: 1px solid rgba(90, 58, 30, 0.14);
+  border-radius: 999px;
+  background: rgba(253, 248, 238, 0.8);
+  box-shadow: 0 12px 32px -20px rgba(42, 26, 14, 0.55);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  color: var(--l-ink);
+  transition:
+    background-color 300ms var(--l-ease),
+    border-color 300ms var(--l-ease),
+    color 300ms var(--l-ease);
+}
+
+.l-nav[data-tone='dark'] .l-nav__bar {
+  border-color: var(--l-moon-line);
+  background: rgba(16, 23, 74, 0.74);
+  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.8);
+  color: var(--l-moon);
+  --color-ocean-bright: var(--l-haldi);
+  --color-ocean: var(--l-moon-muted);
+}
+
+.l-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.l-brand__latin {
+  font-family: var(--l-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.l-brand__deva {
+  font-family: var(--l-display);
+  font-size: 0.95rem;
+  opacity: 0.6;
+}
+
+.l-nav__links {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.l-nav__links a {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0.8;
+  transition:
+    opacity 150ms,
+    background-color 150ms;
+}
+
+.l-nav__links a:hover {
+  opacity: 1;
+  background: rgba(127, 110, 90, 0.12);
+}
+
+.l-nav__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.l-nav__sheet {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: var(--l-wrap);
+  margin: 8px auto 0;
+  padding: 12px;
+  border: 1px solid rgba(90, 58, 30, 0.14);
+  border-radius: 24px;
+  background: var(--l-card);
+  box-shadow: 0 24px 48px -24px rgba(42, 26, 14, 0.5);
+  color: var(--l-ink);
+  animation: l-drop 220ms var(--l-ease) both;
+}
+
+.l-nav__sheet a:not(.l-btn) {
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.l-nav__sheet a:not(.l-btn):hover {
+  background: var(--l-paper);
+}
+
+.l-nav__sheet .l-btn {
+  margin-top: 6px;
+}
+
+@keyframes l-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 900px) {
+  .l-nav__links,
+  .l-nav__cta {
+    display: none;
+  }
+
+  .l-nav__toggle {
+    display: inline-flex;
+  }
+}
+
+/* ---------------------------------------------------------
+   DEPTH GAUGE — the 15 standard depths, fixed at the left
+   --------------------------------------------------------- */
+
+.l-gauge {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  z-index: 40;
+  height: min(52vh, 440px);
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--l-ink-faint);
+  transition: color 300ms var(--l-ease);
+}
+
+.l-gauge[data-tone='dark'] {
+  color: var(--l-moon-faint);
+}
+
+.l-gauge__rail {
+  position: relative;
+  width: 2px;
+  height: 100%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.l-gauge__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--l-kesar), var(--l-haldi) 30%, #8C97E8);
+}
+
+.l-gauge__tick {
+  position: absolute;
+  left: -3px;
+  width: 8px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.l-gauge__tick[data-labelled='true'] {
+  width: 12px;
+  left: -5px;
+}
+
+.l-gauge__tick[data-passed='true'] {
+  background: var(--l-kesar);
+}
+
+.l-gauge[data-tone='dark'] .l-gauge__tick[data-passed='true'] {
+  background: var(--l-haldi);
+}
+
+.l-gauge__label {
+  position: absolute;
+  left: 14px;
+  top: -7px;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.l-gauge__marker {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--l-ink);
+  color: var(--l-paper);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+.l-gauge__marker::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--l-paper);
+  border-radius: 50%;
+  background: var(--l-kesar);
+  transform: translateY(-50%);
+}
+
+.l-gauge[data-tone='dark'] .l-gauge__marker {
+  background: var(--l-moon);
+  color: var(--l-neel-deep);
+}
+
+.l-gauge[data-tone='dark'] .l-gauge__marker::before {
+  border-color: var(--l-neel-deep);
+  background: var(--l-haldi);
+}
+
+@media (max-width: 1240px) {
+  .l-gauge {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   HERO — the surface
+   --------------------------------------------------------- */
+
+.l-hero {
+  position: relative;
+  padding-top: clamp(108px, 15vh, 160px);
+  overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 88% 8%, rgba(244, 180, 26, 0.22), transparent 70%),
+    radial-gradient(40% 40% at 6% 30%, rgba(238, 138, 30, 0.10), transparent 70%),
+    var(--l-paper);
+}
+
+/* A faint kolam lattice in the sunlit corner. */
+.l-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%239A4A06' stroke-opacity='.13' stroke-width='1'%3E%3Ccircle cx='0' cy='0' r='28'/%3E%3Ccircle cx='56' cy='0' r='28'/%3E%3Ccircle cx='0' cy='56' r='28'/%3E%3Ccircle cx='56' cy='56' r='28'/%3E%3C/g%3E%3Cg fill='%239A4A06' fill-opacity='.2'%3E%3Ccircle cx='28' cy='28' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: radial-gradient(48% 55% at 94% 6%, #000 5%, transparent 72%);
+  mask-image: radial-gradient(48% 55% at 94% 6%, #000 5%, transparent 72%);
+  pointer-events: none;
+}
+
+.l-hero > * {
+  position: relative;
+}
+
+.l-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding: 7px 16px 7px 12px;
+  border: 1px solid rgba(154, 74, 6, 0.2);
+  border-radius: 999px;
+  background: rgba(253, 248, 238, 0.7);
+  color: var(--l-kesar-ink);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.l-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--l-kesar);
+  box-shadow: 0 0 0 4px rgba(238, 138, 30, 0.18);
+}
+
+.l-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 24px clamp(32px, 5vw, 72px);
+}
+
+.l-hero__title {
+  margin: 0;
+  font-size: clamp(2.7rem, 1.2rem + 4vw, 5rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.l-hero__lede {
+  max-width: 44ch;
+  color: var(--l-ink-muted);
+  font-size: clamp(1.05rem, 0.98rem + 0.3vw, 1.2rem);
+  line-height: 1.6;
+}
+
+.l-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .l-hero__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The surface line and the word that hangs from it. Devanagari
+   letters hang from a headline stroke (shirorekha); here that
+   stroke is the sea surface and the letters are the column. */
+
+.l-surface {
+  position: relative;
+  margin-top: clamp(40px, 7vh, 80px);
+}
+
+.l-surface__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  color: var(--l-ink-faint);
+  font-size: 0.9rem;
+}
+
+.l-surface__labels [lang='hi'] {
+  font-family: var(--l-display);
+  color: var(--l-kesar-ink);
+}
+
+.l-wordmark {
+  --size: clamp(5.5rem, 17vw, 15rem);
+  /* Eczar 700 at line-height 1.1, measured from rendered glyphs:
+     the shirorekha starts 0.147em below the top of the line box and
+     is 0.062em thick; the letters end about 0.84em down. */
+  --shiro: 0.147em;
+  --shiro-weight: 0.062em;
+
+  position: relative;
+  margin-bottom: -0.24em;
+  font-family: var(--l-display);
+  font-size: var(--size);
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.l-wordmark::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--shiro);
+  height: var(--shiro-weight);
+  background: var(--l-kesar);
+  transform-origin: left center;
+  animation: l-surface-draw 900ms var(--l-ease) both;
+}
+
+/* background-clip: text only colours glyphs inside the box, so the
+   box is extended 0.3em upward (and pulled back with a matching
+   negative margin) to cover the marks above the headline stroke.
+   The stroke then sits at ~30% of the box and the letters end at
+   ~77%, which is where the saffron-to-indigo ramp is placed. */
+.l-wordmark__word {
+  display: inline-block;
+  margin-top: -0.3em;
+  padding-top: 0.3em;
+  padding-bottom: 0.08em;
+  background: linear-gradient(
+    180deg,
+    var(--l-kesar) 0%,
+    var(--l-kesar) 35%,
+    #D9602B 45%,
+    #93406A 57%,
+    #3A2D78 67%,
+    var(--l-neel) 76%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: l-sink 1100ms var(--l-ease) 350ms both;
+}
+
+@keyframes l-surface-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* The letters descend out of the surface line. The insets are
+   negative at the end so marks that rise above the headline stroke
+   (anusvara, matras) are never trimmed. */
+@keyframes l-sink {
+  from {
+    clip-path: inset(-0.6em -0.2em 86% -0.2em);
+    transform: translateY(-0.05em);
+  }
+  to {
+    clip-path: inset(-0.6em -0.2em -0.2em -0.2em);
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   SURFACE INPUTS — a slow marquee of chips
+   --------------------------------------------------------- */
+
+.l-inputs {
+  padding: 36px 0 56px;
+}
+
+.l-inputs__title {
+  margin-bottom: 16px;
+  color: var(--l-ink-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.l-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.l-marquee__track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  animation: l-marquee 38s linear infinite;
+}
+
+.l-marquee:hover .l-marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes l-marquee {
+  to {
+    transform: translateX(calc(-50% - 6px));
+  }
+}
+
+.l-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px 8px 8px;
+  border: 1px solid var(--l-line);
+  border-radius: 999px;
+  background: var(--l-card);
+  color: var(--l-ink);
+  font-size: 0.98rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.l-chip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(238, 138, 30, 0.14);
+  color: var(--l-kesar-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .l-marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .l-marquee__track {
+    flex-wrap: wrap;
+    width: auto;
+    padding: 4px var(--l-gutter);
+    animation: none;
+  }
+
+  .l-marquee__track [aria-hidden='true'] {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   STATS — the upper ocean
+   --------------------------------------------------------- */
+
+.l-stats {
+  padding: 72px 0;
+  border-top: 1px solid var(--l-line);
+  background: var(--l-paper-deep);
+}
+
+.l-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.l-stat {
+  padding: 8px 28px;
+}
+
+.l-stat + .l-stat {
+  border-left: 2px dotted rgba(154, 74, 6, 0.28);
+}
+
+.l-stat__value {
+  font-family: var(--l-display);
+  font-size: clamp(2.8rem, 1.8rem + 3vw, 4.4rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.l-stat__unit {
+  color: var(--l-kesar-ink);
+  font-size: 0.6em;
+}
+
+.l-stat__label {
+  max-width: 20ch;
+  margin-top: 12px;
+  color: var(--l-ink-muted);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .l-stats__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 36px;
+  }
+
+  .l-stat:nth-child(3) {
+    border-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .l-stat {
+    padding: 8px 14px;
+  }
+
+  .l-stat:first-child,
+  .l-stat:nth-child(3) {
+    padding-left: 0;
+  }
+}
+
+/* ---------------------------------------------------------
+   STATEMENT — words surface as you read
+   --------------------------------------------------------- */
+
+.l-statement {
+  padding: clamp(80px, 14vh, 150px) 0 clamp(70px, 10vh, 110px);
+  background: var(--l-paper-deep);
+}
+
+.l-reveal {
+  max-width: 24ch;
+  font-family: var(--l-display);
+  font-size: clamp(1.9rem, 1.1rem + 3.2vw, 3.6rem);
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.015em;
+}
+
+.l-reveal span {
+  color: var(--l-ink);
+  opacity: 0.16;
+  transition: opacity 260ms var(--l-ease);
+}
+
+.l-reveal span[data-lit='true'] {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------
+   THERMOCLINE — the fastest change of colour on the page
+   --------------------------------------------------------- */
+
+.l-thermocline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(220px, 34vh, 320px);
+  background: linear-gradient(
+    180deg,
+    var(--l-paper-deep) 0%,
+    #F3C27E 22%,
+    #E07A3A 42%,
+    #93406A 62%,
+    #3A2D78 82%,
+    var(--l-neel) 100%
+  );
+}
+
+.l-thermocline__note {
+  width: min(560px, calc(100% - var(--l-gutter) * 2));
+  margin: 0 auto;
+  padding: 14px 22px;
+  border-radius: 999px;
+  background: rgba(253, 248, 238, 0.92);
+  color: var(--l-ink);
+  font-size: 0.98rem;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: 0 10px 30px -18px rgba(42, 26, 14, 0.6);
+}
+
+.l-thermocline__note strong {
+  font-family: var(--l-display);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .l-thermocline__note {
+    border-radius: 20px;
+  }
+}
+
+/* ---------------------------------------------------------
+   THE DEEP
+   --------------------------------------------------------- */
+
+.l-deep {
+  --color-ocean-bright: var(--l-haldi);
+  --color-ocean: var(--l-moon-muted);
+
+  background: linear-gradient(
+    180deg,
+    var(--l-neel) 0%,
+    var(--l-neel-deep) 38%,
+    var(--l-abyss) 100%
+  );
+  color: var(--l-moon);
+}
+
+.l-deep ::selection {
+  background: rgba(244, 180, 26, 0.3);
+}
+
+.l-deep :focus-visible {
+  outline-color: var(--l-haldi);
+}
+
+.l-section {
+  padding: clamp(80px, 12vh, 128px) 0;
+  scroll-margin-top: 40px;
+}
+
+.l-heading {
+  margin-bottom: clamp(36px, 6vh, 56px);
+}
+
+.l-heading__hindi {
+  margin-bottom: 6px;
+  color: var(--l-haldi);
+  font-family: var(--l-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.l-heading h2 {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.4rem);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.l-body {
+  max-width: 52ch;
+  color: var(--l-moon-muted);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+/* How it works: each step sits a little deeper than the last. */
+
+.l-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.l-step {
+  position: relative;
+  padding-top: 22px;
+  border-top: 1px solid var(--l-moon-line);
+}
+
+.l-step:nth-child(2) {
+  margin-top: 64px;
+}
+
+.l-step:nth-child(3) {
+  margin-top: 128px;
+}
+
+.l-step::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--l-haldi);
+}
+
+.l-step__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.l-step__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(244, 180, 26, 0.4);
+  border-radius: 50%;
+  color: var(--l-haldi);
+}
+
+.l-step__number {
+  font-family: var(--l-display);
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--l-moon-faint);
+}
+
+.l-step h3 {
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.l-step p {
+  color: var(--l-moon-muted);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .l-steps {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .l-step:nth-child(2),
+  .l-step:nth-child(3) {
+    margin-top: 0;
+  }
+
+  .l-step {
+    padding-left: 0;
+  }
+}
+
+/* The Bay */
+
+.l-bay__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 80px);
+}
+
+.l-bay__map {
+  width: 100%;
+  max-width: 560px;
+}
+
+.l-medallion {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.l-medallion__pulli {
+  fill: var(--l-haldi);
+  fill-opacity: 0.42;
+}
+
+.l-medallion__ring {
+  fill: none;
+  stroke: var(--l-haldi);
+  stroke-opacity: 0.55;
+  stroke-width: 1.2;
+}
+
+.l-medallion__ring-dot {
+  fill: var(--l-kesar);
+  fill-opacity: 0.85;
+}
+
+/* Opaque, so the grid dots only show over water (the model's
+   output is ocean-only). */
+.l-medallion__land {
+  fill: #444773;
+  stroke: #F1D9A8;
+  stroke-opacity: 0.6;
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.l-medallion__domain {
+  fill: none;
+  stroke: var(--l-haldi);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 6;
+}
+
+.l-medallion__sea-name {
+  fill: var(--l-moon);
+  font-family: var(--l-display);
+  font-size: 26px;
+  font-style: italic;
+  font-weight: 500;
+  text-anchor: middle;
+}
+
+.l-medallion__place {
+  fill: #F1E2C4;
+  fill-opacity: 0.8;
+  font-family: var(--l-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.l-medallion__coord,
+.l-medallion__point-label {
+  fill: var(--l-moon-muted);
+  font-family: var(--l-body);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.l-medallion__point {
+  fill: var(--l-kesar);
+  stroke: var(--l-moon);
+  stroke-width: 1.5;
+}
+
+.l-medallion__pulse {
+  fill: none;
+  stroke: var(--l-kesar);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: l-pulse 2.6s ease-out infinite;
+}
+
+@keyframes l-pulse {
+  from {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .l-medallion__pulse {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+.l-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 36px 0 0;
+  border-top: 1px solid var(--l-moon-line);
+}
+
+.l-facts > div {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--l-moon-line);
+}
+
+.l-facts dt {
+  color: var(--l-moon-faint);
+  font-size: 0.92rem;
+}
+
+.l-facts dd {
+  margin: 2px 0 0;
+  font-family: var(--l-display);
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .l-bay__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .l-bay__map {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+}
+
+/* Tools: rows, not a grid of identical cards. */
+
+.l-tools {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--l-moon-line);
+}
+
+.l-tool {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 30px 8px;
+  border-bottom: 1px solid var(--l-moon-line);
+  transition: background-color 200ms var(--l-ease);
+}
+
+.l-tool:hover {
+  background: rgba(238, 235, 248, 0.04);
+}
+
+.l-tool__name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.l-tool__title {
+  font-family: var(--l-display);
+  font-size: clamp(1.8rem, 1.3rem + 1.6vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.l-tool__hindi {
+  color: var(--l-haldi);
+  font-family: var(--l-display);
+  font-size: 1.1rem;
+}
+
+.l-tool__body {
+  color: var(--l-moon-muted);
+  line-height: 1.6;
+}
+
+.l-tool__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--l-moon-line);
+  border-radius: 50%;
+  color: var(--l-moon);
+  transition:
+    background-color 200ms var(--l-ease),
+    border-color 200ms var(--l-ease),
+    color 200ms var(--l-ease),
+    transform 200ms var(--l-ease);
+}
+
+.l-tool:hover .l-tool__arrow {
+  border-color: var(--l-kesar);
+  background: var(--l-kesar);
+  color: #2A1504;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 760px) {
+  .l-tool {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 16px;
+    padding: 24px 0;
+  }
+
+  .l-tool__body {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .l-tool__arrow {
+    grid-column: 2;
+    grid-row: 1;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* FAQ */
+
+.l-faq__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  gap: clamp(32px, 6vw, 80px);
+  align-items: start;
+}
+
+.l-faq__aside {
+  margin-top: 18px;
+  font-size: 1rem;
+}
+
+.l-faq__list {
+  border-top: 1px solid var(--l-moon-line);
+}
+
+.l-faq__item {
+  border-bottom: 1px solid var(--l-moon-line);
+}
+
+.l-faq__item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 0;
+  font-family: var(--l-display);
+  font-size: 1.28rem;
+  font-weight: 500;
+  line-height: 1.3;
+  list-style: none;
+  cursor: pointer;
+}
+
+.l-faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.l-faq__icon {
+  flex-shrink: 0;
+  color: var(--l-haldi);
+  transition: transform 240ms var(--l-ease);
+}
+
+.l-faq__item[open] .l-faq__icon {
+  transform: rotate(45deg);
+}
+
+.l-faq__item p {
+  max-width: 62ch;
+  padding: 0 40px 24px 0;
+  color: var(--l-moon-muted);
+  line-height: 1.7;
+  animation: l-drop 240ms var(--l-ease) both;
+}
+
+@media (max-width: 900px) {
+  .l-faq__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .l-faq__item p {
+    padding-right: 0;
+  }
+}
+
+/* ---------------------------------------------------------
+   FOOTER — 1,000 m
+   --------------------------------------------------------- */
+
+.l-footer {
+  padding: 24px 0 32px;
+}
+
+.l-footer__card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(32px, 5vw, 56px);
+  border: 1px solid var(--l-moon-line);
+  border-radius: 32px;
+  background:
+    radial-gradient(70% 90% at 100% 0%, rgba(244, 180, 26, 0.08), transparent 60%),
+    rgba(16, 23, 74, 0.55);
+}
+
+.l-footer__cta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 32px;
+  padding-bottom: clamp(32px, 5vw, 48px);
+  border-bottom: 1px solid var(--l-moon-line);
+}
+
+.l-footer__depth {
+  font-family: var(--l-display);
+  font-size: clamp(3rem, 2rem + 4vw, 5rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--l-haldi);
+  letter-spacing: -0.02em;
+}
+
+.l-footer__line {
+  max-width: 34ch;
+  color: var(--l-moon-muted);
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.l-footer__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  padding-top: clamp(32px, 5vw, 48px);
+}
+
+.l-footer__cols h3 {
+  margin: 0 0 12px;
+  font-family: var(--l-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--l-moon);
+}
+
+.l-footer__cols ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--l-moon-muted);
+  font-size: 0.98rem;
+}
+
+.l-footer__cols a:hover {
+  color: var(--l-haldi);
+}
+
+.l-footer__brand p {
+  max-width: 34ch;
+  margin-top: 14px;
+  color: var(--l-moon-muted);
+  line-height: 1.6;
+}
+
+.l-footer__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--l-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.l-footer__mark [lang='hi'] {
+  color: var(--l-moon-faint);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+/* A hairline tiranga along the base of the card. */
+.l-footer__tiranga {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  height: 4px;
+}
+
+.l-footer__tiranga span {
+  flex: 1;
+}
+
+.l-footer__tiranga span:nth-child(1) {
+  background: #FF9933;
+}
+
+.l-footer__tiranga span:nth-child(2) {
+  background: #FFFFFF;
+}
+
+.l-footer__tiranga span:nth-child(3) {
+  background: #138808;
+}
+
+@media (max-width: 900px) {
+  .l-footer__cta {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .l-footer__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .l-footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .l-footer__cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------
+   SMALL SCREENS — hero
+   --------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .l-surface__labels {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .l-hero__actions .l-btn {
+    flex: 1 1 100%;
+  }
+}

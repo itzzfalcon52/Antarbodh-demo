@@ -1,0 +1,445 @@
+/* =========================================================
+   NEEL THEME — shared by every app page
+   The landing page's deep-water language: indigo (neel)
+   surfaces, saffron (kesar) and turmeric (haldi) accents, Eczar
+   and Mukta type. Applied through data-theme on the app shell, so
+   components that read the design tokens adapt automatically;
+   the rules below restyle the shared building blocks.
+   Scientific colour scales on maps and charts are unchanged.
+   ========================================================= */
+
+[data-theme='neel'] {
+  --l-kesar: #EE8A1E;
+  --l-kesar-hover: #F59B35;
+  --l-haldi: #F4B41A;
+  --l-moon: #EEEBF8;
+
+  /* Surfaces */
+  --color-abyss: #060A22;
+  --color-ink: #0A1033;
+  --color-deep: #0F1645;
+  --color-panel: #121A4E;
+  --color-panel-light: #1A2361;
+  --color-shelf: #232E78;
+
+  --surface-sunken: #0D1440;
+  --surface-raised: #18215C;
+  --surface-hover: #202A6C;
+  --surface-scrim: rgba(10, 16, 51, 0.74);
+
+  --scrim-soft: rgba(6, 10, 34, 0.5);
+  --scrim-strong: rgba(6, 10, 34, 0.78);
+  --scrim-chip: rgba(6, 10, 34, 0.84);
+
+  --sheen: rgba(238, 235, 248, 0.05);
+  --sheen-soft: rgba(238, 235, 248, 0.025);
+
+  /* Lines */
+  --color-border: rgba(185, 189, 226, 0.2);
+  --color-border-strong: rgba(185, 189, 226, 0.34);
+  --color-border-faint: rgba(185, 189, 226, 0.11);
+  --scrollbar-thumb: rgba(185, 189, 226, 0.24);
+  --scrollbar-thumb-hover: rgba(185, 189, 226, 0.4);
+
+  /* Text */
+  --color-text: #EEEBF8;
+  --color-text-muted: #C6C9E8;
+  --color-text-subtle: #A2A7D4;
+  --color-text-faint: #7D83B8;
+  --color-on-accent: #2A1504;
+
+  /* Accents */
+  --color-ocean: var(--l-kesar);
+  --color-ocean-bright: var(--l-haldi);
+  --color-ocean-deep: #B35F0C;
+  --color-teal: #7FD1C1;
+  --color-sand: #F1D9A8;
+  --wash-ocean: rgba(238, 138, 30, 0.14);
+  --wash-ocean-strong: rgba(238, 138, 30, 0.24);
+  --wash-teal: rgba(127, 209, 193, 0.14);
+  --wash-danger: rgba(240, 113, 103, 0.14);
+
+  --color-warning: var(--l-haldi);
+  --color-danger: #F07167;
+  --color-success: #7FD1C1;
+
+  --grid-line: rgba(185, 189, 226, 0.13);
+  --grid-line-faint: rgba(185, 189, 226, 0.06);
+  --axis-line: rgba(185, 189, 226, 0.34);
+
+  /* Depth language: warm surface to cold deep, as on the landing */
+  --depth-upper: var(--l-haldi);
+  --depth-thermocline: #E0703A;
+  --depth-deep: #8C97E8;
+  --depth-line-deep: #8C97E8;
+  --gradient-depth: linear-gradient(
+    180deg,
+    var(--l-kesar) 0%,
+    var(--l-haldi) 16%,
+    #D9602B 38%,
+    #93406A 60%,
+    #5A4FB0 80%,
+    #8C97E8 100%
+  );
+  --gradient-abyss: linear-gradient(180deg, #111A52 0%, #0A1033 45%, #070B27 100%);
+
+  --header-bg: rgba(10, 16, 51, 0.82);
+  --sheet-bg: rgba(10, 16, 51, 0.97);
+  --ring-focus: 0 0 0 2px var(--color-ink), 0 0 0 4px rgba(244, 180, 26, 0.6);
+
+  --font-display: 'Eczar', 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Mukta', 'Inter', system-ui, sans-serif;
+
+  --radius-md: 12px;
+  --radius-lg: 22px;
+
+  font-family: var(--font-sans);
+}
+
+/* The root background shows wherever a page scrolls past the shell. */
+html:has([data-theme='neel']),
+body:has([data-theme='neel']) {
+  background-color: #0A1033;
+}
+
+[data-theme='neel'] ::selection {
+  background: rgba(244, 180, 26, 0.3);
+}
+
+/* A page background shared by the scrolling pages. */
+[data-theme='neel'] .neel-page {
+  background:
+    radial-gradient(60% 40% at 100% 0%, rgba(244, 180, 26, 0.06), transparent 70%),
+    radial-gradient(50% 50% at 0% 100%, rgba(90, 79, 176, 0.16), transparent 70%),
+    var(--gradient-abyss);
+  background-attachment: local;
+}
+
+/* ---------------------------------------------------------
+   TYPE
+   --------------------------------------------------------- */
+
+.kicker {
+  margin: 0 0 4px;
+  color: var(--l-haldi);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.nl-unit {
+  color: var(--color-text-subtle);
+  font-size: 0.6em;
+  font-weight: 400;
+}
+
+[data-theme='neel'] .page-title {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.3rem + 2.4vw, 3.2rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+[data-theme='neel'] .page-lede {
+  max-width: 60ch;
+  margin: 12px 0 0;
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Section titles: Eczar, sentence case, a quiet rule. */
+[data-theme='neel'] .block-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-faint);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+[data-theme='neel'] .block-title small {
+  color: var(--color-text-faint);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+[data-theme='neel'] .label-scientific {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--color-text-subtle);
+}
+
+[data-theme='neel'] .label-scientific--bright {
+  color: var(--color-text);
+}
+
+[data-theme='neel'] .display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+[data-theme='neel'] .display em {
+  font-style: normal;
+  color: inherit;
+}
+
+[data-theme='neel'] .lede,
+[data-theme='neel'] .prose {
+  color: var(--color-text-muted);
+}
+
+[data-theme='neel'] .data-numeric {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='neel'] .data-readout {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+[data-theme='neel'] .section-head {
+  border-color: var(--color-border-faint);
+}
+
+[data-theme='neel'] .section-head__rule {
+  background: var(--color-border-faint);
+}
+
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
+
+[data-theme='neel'] .app-header {
+  border-bottom-color: var(--color-border-faint);
+  background: var(--header-bg);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+
+[data-theme='neel'] .app-brand__name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+[data-theme='neel'] .app-brand__deva {
+  display: inline;
+  color: var(--color-text-faint);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+[data-theme='neel'] .app-brand__tagline {
+  margin-top: 1px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-theme='neel'] .nav-link {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+[data-theme='neel'] .nav-link:hover {
+  background: rgba(238, 235, 248, 0.06);
+}
+
+[data-theme='neel'] .nav-link[data-active='true'] {
+  background: rgba(244, 180, 26, 0.14);
+  color: var(--l-haldi);
+}
+
+[data-theme='neel'] .nav-link::after {
+  display: none;
+}
+
+/* The header's small labels stay compact caps. */
+[data-theme='neel'] .app-header .label-scientific {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  [data-theme='neel'] .app-brand__tagline {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   SURFACES, BUTTONS, BADGES, FIELDS
+   --------------------------------------------------------- */
+
+[data-theme='neel'] .surface {
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background:
+    radial-gradient(90% 40% at 100% 0%, rgba(244, 180, 26, 0.045), transparent 70%),
+    rgba(18, 26, 78, 0.66);
+  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.75);
+}
+
+[data-theme='neel'] .surface--flush {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-theme='neel'] .btn {
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-theme='neel'] .btn--primary {
+  border-color: transparent;
+  background: var(--l-kesar);
+  color: #2A1504;
+}
+
+[data-theme='neel'] .btn--primary:hover:not(:disabled) {
+  background: var(--l-kesar-hover);
+}
+
+[data-theme='neel'] .btn--secondary {
+  border: 1.5px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text);
+}
+
+[data-theme='neel'] .btn--secondary:hover:not(:disabled) {
+  border-color: var(--color-text-subtle);
+  background: rgba(238, 235, 248, 0.05);
+}
+
+[data-theme='neel'] .badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-theme='neel'] .badge--ocean {
+  border-color: transparent;
+  background: rgba(244, 180, 26, 0.16);
+  color: var(--l-haldi);
+}
+
+[data-theme='neel'] .spinner {
+  border-color: var(--color-border);
+  border-top-color: var(--l-haldi);
+}
+
+[data-theme='neel'] .icon-btn {
+  border-radius: 999px;
+}
+
+/* ---------------------------------------------------------
+   MAPS — overlays take the neel palette too (the default theme
+   restores a blue ocean palette inside .map-region)
+   --------------------------------------------------------- */
+
+[data-theme='neel'] .map-region {
+  --color-text: #EEEBF8;
+  --color-text-muted: #C6C9E8;
+  --color-text-subtle: #A2A7D4;
+  --color-text-faint: #7D83B8;
+  --color-border: rgba(185, 189, 226, 0.22);
+  --color-border-strong: rgba(185, 189, 226, 0.36);
+  --color-border-faint: rgba(185, 189, 226, 0.12);
+  --color-ocean: var(--l-kesar);
+  --color-ocean-bright: var(--l-haldi);
+  --surface-scrim: rgba(10, 16, 51, 0.7);
+  --scrim-soft: rgba(6, 10, 34, 0.45);
+  --scrim-strong: rgba(6, 10, 34, 0.78);
+  --scrim-chip: rgba(6, 10, 34, 0.84);
+}
+
+[data-theme='neel'] .map-frame {
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background-color: #0C1342;
+  box-shadow:
+    0 30px 60px -30px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(6, 10, 34, 0.4);
+}
+
+[data-theme='neel'] .map-frame::after {
+  box-shadow: inset 0 0 80px rgba(6, 10, 34, 0.55);
+}
+
+[data-theme='neel'] .map-overlay {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: rgba(10, 16, 51, 0.72);
+  box-shadow: 0 16px 36px -20px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+
+/* ---------------------------------------------------------
+   TABLES AND CHARTS
+   --------------------------------------------------------- */
+
+[data-theme='neel'] .data-table th {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-theme='neel'] .data-table td {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+[data-theme='neel'] .pr-band {
+  fill: rgba(238, 235, 248, 0.015);
+}
+
+[data-theme='neel'] .pr-band--alt {
+  fill: rgba(238, 235, 248, 0.04);
+}
+
+[data-theme='neel'] .pr-tick,
+[data-theme='neel'] .pr-bubble text,
+[data-theme='neel'] .pr-cooling__value {
+  font-family: var(--font-sans);
+}

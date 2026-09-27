@@ -1,0 +1,279 @@
+/* =========================================================
+   METHODOLOGY
+   Page styles on top of the shared neel theme. The pipeline is
+   drawn as a descent on the same saffron-to-indigo spine as the
+   landing page's depth gauge.
+   ========================================================= */
+
+[data-theme='neel'] .methodology-page {
+  padding: var(--space-8) var(--space-6) var(--space-12);
+}
+
+.me-head {
+  max-width: 70ch;
+  margin-bottom: var(--space-8);
+}
+
+.me-section {
+  margin-bottom: var(--space-8);
+}
+
+/* Pipeline */
+
+.me-pipeline {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 4px;
+  list-style: none;
+}
+
+.me-pipeline::before {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: 22px;
+  bottom: 22px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--gradient-depth);
+}
+
+.me-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 12px 20px 12px 0;
+}
+
+.me-step__n {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: #0D1440;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.me-step:first-child .me-step__n {
+  border-color: var(--l-kesar);
+}
+
+.me-step h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.me-step p {
+  margin: 2px 0 0;
+  color: var(--color-text-subtle);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.me-step--check .me-step__n {
+  border-color: transparent;
+  background: var(--l-haldi);
+  color: #2A1504;
+}
+
+.me-step--check h3 {
+  color: var(--l-haldi);
+}
+
+.me-note {
+  max-width: 78ch;
+  margin: 20px 0 0;
+  padding: 16px 20px;
+  border: 1px solid var(--color-border-faint);
+  border-radius: 16px;
+  background: rgba(6, 10, 34, 0.35);
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.me-note strong {
+  color: var(--color-text);
+}
+
+/* Inputs and identity */
+
+.me-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.me-card {
+  padding: 24px 28px !important;
+}
+
+.me-card .block-title .badge {
+  font-size: 0.85rem;
+}
+
+.me-channels {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.me-channels th {
+  padding: 0 12px 10px 0;
+  color: var(--color-text-subtle);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.me-channels td {
+  padding: 11px 12px 11px 0;
+  border-top: 1px solid var(--color-border-faint);
+  color: var(--color-text);
+  font-size: 0.98rem;
+  vertical-align: baseline;
+}
+
+.me-channels td + td {
+  color: var(--color-text-subtle);
+}
+
+.me-channels__n {
+  display: inline-block;
+  min-width: 26px;
+  color: var(--color-text-faint);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.me-channels__code {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(244, 180, 26, 0.12);
+  color: var(--l-haldi);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.me-callout {
+  margin: 20px 0 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--l-kesar);
+  border-radius: 0 14px 14px 0;
+  background: rgba(238, 138, 30, 0.08);
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.me-callout strong {
+  color: var(--color-text);
+}
+
+.me-identity {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.me-identity dt {
+  color: var(--color-text-faint);
+  font-size: 0.8rem;
+}
+
+.me-identity dd {
+  margin: 2px 0 0;
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.me-subtitle {
+  margin: 24px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-faint);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.me-gauge {
+  display: block;
+  width: 180px;
+  height: auto;
+}
+
+.me-gauge__tick {
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+
+.me-gauge__dot {
+  fill: #0D1440;
+  stroke: var(--l-haldi);
+  stroke-width: 1.5;
+}
+
+.me-gauge__label {
+  fill: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.me-gauge-note {
+  margin: 8px 0 0;
+  color: var(--color-text-faint);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .me-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  [data-theme='neel'] .methodology-page {
+    padding: var(--space-6) var(--space-4) var(--space-10);
+  }
+
+  .me-card {
+    padding: 20px 18px !important;
+  }
+
+  .me-channels thead {
+    display: none;
+  }
+
+  .me-channels tr {
+    display: grid;
+    padding: 8px 0;
+    border-top: 1px solid var(--color-border-faint);
+  }
+
+  .me-channels td {
+    padding: 2px 0;
+    border-top: none;
+  }
+}

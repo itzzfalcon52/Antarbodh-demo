@@ -94,16 +94,24 @@ export interface ValidationSample {
   common_matched_observations: number;
   matched_profiles: number;
   matched_floats: number;
+  raw_observations?: number;
+  post_qc_observations?: number;
 }
 
 export interface ValidationOverallMetrics {
   rmse: number;
   mae: number;
   bias: number;
-  corr: number;
+  // The backend report names this `correlation`; `corr` is kept for
+  // older reports. Read it through overallCorrelation().
+  corr?: number;
+  correlation?: number;
 }
 
 export interface ValidationReportResponse {
+  period?: string;
+  argo_source?: string;
+
   sample: ValidationSample;
 
   antarbodh_vs_argo: ValidationOverallMetrics;

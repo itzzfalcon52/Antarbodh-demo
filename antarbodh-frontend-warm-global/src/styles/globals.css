@@ -357,6 +357,32 @@ button {
   border-bottom: 1px solid var(--color-border-faint);
 }
 
+/* Brand lock-up. Themes (see explore.css) restyle these classes. */
+.app-brand__name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  color: var(--color-text);
+  text-transform: uppercase;
+}
+
+.app-brand__deva {
+  display: none;
+}
+
+.app-brand__tagline {
+  margin-top: 2px;
+  font-size: 0.5875rem;
+  font-weight: 560;
+  color: var(--color-text-faint);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .nav-link {
   position: relative;
   display: inline-flex;
@@ -815,6 +841,12 @@ input[type='range']:disabled::-webkit-slider-thumb {
   scrollbar-gutter: stable;
 }
 
+/* The panel scrolls; its contents must not be squeezed (the map and
+   observation card previously collapsed to a hairline). */
+.predict-request-panel > * {
+  flex-shrink: 0;
+}
+
 .predict-result-panel {
   flex: 1;
   min-width: 0;
@@ -822,6 +854,33 @@ input[type='range']:disabled::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   padding: var(--space-5);
+  /* Scroll rather than squeeze: the result must never collapse. */
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* On short desktop screens the two fixed-height panels leave too
+   little room, so the page scrolls as a whole instead. */
+@media (max-height: 820px) and (min-width: 1001px) {
+  .predict-page {
+    height: auto;
+  }
+
+  .predict-layout {
+    flex: none;
+    align-items: flex-start;
+  }
+
+  .predict-request-panel {
+    position: sticky;
+    top: var(--space-5);
+    max-height: calc(100vh - var(--space-10));
+  }
+
+  .predict-result-panel {
+    overflow: visible;
+    min-height: 560px;
+  }
 }
 
 /* ---------------------- FORM ---------------------- */
@@ -1237,6 +1296,7 @@ input[type='range']:disabled::-webkit-slider-thumb {
 
   .predict-result-panel {
     min-height: 560px;
+    overflow: visible;
   }
 }
 

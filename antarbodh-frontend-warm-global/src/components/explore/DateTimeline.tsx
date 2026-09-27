@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { IconButton } from '../ui/IconButton';
+import { SEASONS, formatDay, seasonFor } from '../../lib/seasons';
 
 
 interface DateTimelineProps {
@@ -29,9 +30,17 @@ const END_DATE = '2025-12-31';
 // Label positions along the year, expressed as a fraction.
 // Presentation only — not used in any date computation.
 const MONTH_LABELS = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+/**
+ * A position along the scrubber that lines up with the native range
+ * thumb: the thumb's centre travels from one thumb-radius in from the
+ * left edge to one radius in from the right, not from 0% to 100%.
+ */
+const along = (fraction: number) =>
+  `calc(var(--thumb-r) + (100% - 2 * var(--thumb-r)) * ${fraction})`;
 
 
 function dateToIndex(date: string): number {
@@ -244,7 +253,7 @@ export function DateTimeline({
   const progress =
     totalDays === 0
       ? 0
-      : (currentIndex / totalDays) * 100;
+      : currentIndex / totalDays;
 
 
   // Month tick offsets derived from the same calendar the
@@ -258,40 +267,56 @@ export function DateTimeline({
 
         return {
           label,
-          percent:
+          fraction:
             totalDays === 0
               ? 0
-              : (index / totalDays) * 100,
+              : index / totalDays,
         };
       }),
     [totalDays],
   );
 
 
+  // IMD season bands, placed on the same calendar.
+  const seasonSpans = useMemo(
+    () =>
+      SEASONS.map((season, i) => {
+        const start = dateToIndex(
+          `2025-${String(season.from).padStart(2, '0')}-01`,
+        );
+        const next = SEASONS[i + 1];
+        const end = next
+          ? dateToIndex(`2025-${String(next.from).padStart(2, '0')}-01`)
+          : totalDays;
+
+        return {
+          id: season.id,
+          name: season.name,
+          start: totalDays === 0 ? 0 : start / totalDays,
+          end: totalDays === 0 ? 0 : end / totalDays,
+        };
+      }),
+    [totalDays],
+  );
+
+  const season = seasonFor(selectedDate);
+
+
   return (
     <div className="timeline">
 
       {/* Transport controls */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2px',
-          flexShrink: 0,
-        }}
-      >
+      <div className="timeline__transport">
         <IconButton
+          size="lg"
+          className="timeline__play"
+          data-playing={isPlaying}
           disabled={disabled}
           aria-label={
             isPlaying
               ? 'Pause playback'
               : 'Play through the year'
           }
-          style={{
-            color: isPlaying
-              ? 'var(--color-ocean-bright)'
-              : undefined,
-          }}
           onClick={() => {
             if (isPlaying) {
               stopPlaying();
@@ -335,67 +360,85 @@ export function DateTimeline({
       </div>
 
 
-      {/* Scrubber */}
+      {/* Scrubber: seasons above, the rail, months below. Every
+          layer uses along() so it lines up with the thumb. */}
       <div className="timeline__scrubber">
         <div
           aria-hidden="true"
-          className="timeline__track"
-        />
-
-        <div
-          aria-hidden="true"
-          className="timeline__fill"
-          style={{ width: `${progress}%` }}
-        />
-
-        <div
-          aria-hidden="true"
-          className="timeline__ticks"
+          className="timeline__seasons"
         >
-          {monthOffsets.map(({ label, percent }) => (
+          {seasonSpans.map(({ id, name, start, end }) => (
             <span
-              key={label}
-              className="timeline__tick"
-              style={{ left: `${percent}%` }}
-            />
+              key={id}
+              className="timeline__season"
+              data-season={id}
+              data-current={id === season.id}
+              style={{
+                left: along(start),
+                width: `calc((100% - 2 * var(--thumb-r)) * ${end - start})`,
+              }}
+            >
+              <span className="timeline__season-name">{name}</span>
+            </span>
           ))}
         </div>
 
-        <input
-          type="range"
-          className="timeline-range"
-          min={0}
-          max={totalDays}
-          step={1}
-          value={currentIndex}
-          disabled={disabled}
-          onChange={
-            handleSliderChange
-          }
-          aria-label="Historical date"
-          aria-valuemin={0}
-          aria-valuemax={totalDays}
-          aria-valuenow={currentIndex}
-          aria-valuetext={formatDateLabel(selectedDate)}
-          style={{
-            width: '100%',
-            margin: 0,
-            cursor: disabled
-              ? 'not-allowed'
-              : 'pointer',
-          }}
-        />
+        <div className="timeline__rail">
+          <div
+            aria-hidden="true"
+            className="timeline__track"
+          />
+
+          <div
+            aria-hidden="true"
+            className="timeline__fill"
+            style={{
+              width: `calc((100% - 2 * var(--thumb-r)) * ${progress})`,
+            }}
+          />
+
+          <div
+            aria-hidden="true"
+            className="timeline__ticks"
+          >
+            {monthOffsets.map(({ label, fraction }) => (
+              <span
+                key={label}
+                className="timeline__tick"
+                style={{ left: along(fraction) }}
+              />
+            ))}
+          </div>
+
+          <input
+            type="range"
+            className="timeline-range"
+            min={0}
+            max={totalDays}
+            step={1}
+            value={currentIndex}
+            disabled={disabled}
+            onChange={
+              handleSliderChange
+            }
+            aria-label="Historical date"
+            aria-valuemin={0}
+            aria-valuemax={totalDays}
+            aria-valuenow={currentIndex}
+            aria-valuetext={formatDateLabel(selectedDate)}
+          />
+        </div>
 
         {/* Month labels */}
         <div
           aria-hidden="true"
           className="timeline__months"
         >
-          {monthOffsets.map(({ label, percent }) => (
+          {monthOffsets.map(({ label, fraction }) => (
             <span
               key={label}
               className="timeline__month"
-              style={{ left: `${percent}%` }}
+              style={{ left: along(fraction) }}
             >
               {label}
             </span>
@@ -405,34 +448,13 @@ export function DateTimeline({
 
 
       {/* Date readout */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: '1px',
-          flexShrink: 0,
-          minWidth: '148px',
-        }}
-      >
-        <span
-          className="label-scientific"
-          style={{ fontSize: '0.5625rem' }}
-        >
-          Ocean state
+      <div className="timeline__readout">
+        <span className="timeline__date">
+          {formatDay(selectedDate)}
         </span>
 
-        <span
-          className="data-numeric"
-          style={{
-            fontSize: '1.02rem',
-            letterSpacing: '0.01em',
-            color: 'var(--color-text)',
-          }}
-        >
-          {formatDateLabel(
-            selectedDate,
-          )}
+        <span className="timeline__meta">
+          Day {currentIndex + 1} · {season.name}
         </span>
       </div>
     </div>

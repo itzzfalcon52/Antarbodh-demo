@@ -55,7 +55,9 @@ export function OceanMap({
 
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
-      style: '/assets/ocean-style.json',
+      // Explore's own base style (indigo sea, warm coastline). The
+      // Predict map keeps using ocean-style.json.
+      style: '/assets/ocean-style-neel.json',
       center: [90, 12.5],
       zoom: 4.5,
       maxBounds: [
@@ -82,8 +84,8 @@ export function OceanMap({
         type: 'line',
         source: 'grid',
         paint: {
-          'line-color': '#5AD2F5',
-          'line-opacity': 0.07,
+          'line-color': '#B9BDE2',
+          'line-opacity': 0.06,
           'line-width': 1,
         },
       });
@@ -167,15 +169,31 @@ export function OceanMap({
         },
       });
 
+      // Selected point: a saffron marker with a soft halo, matching
+      // the sample point on the landing page map.
+      mapInstance.addLayer({
+        id: 'highlight-halo',
+        type: 'circle',
+        source: 'highlight',
+        paint: {
+          'circle-radius': 16,
+          'circle-color': '#F4B41A',
+          'circle-opacity': 0.18,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#F4B41A',
+          'circle-stroke-opacity': 0.55,
+        },
+      });
+
       mapInstance.addLayer({
         id: 'highlight-point',
         type: 'circle',
         source: 'highlight',
         paint: {
           'circle-radius': 6,
-          'circle-color': '#EAF4FF',
+          'circle-color': '#EE8A1E',
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#05142B',
+          'circle-stroke-color': '#FFFFFF',
         },
       });
 

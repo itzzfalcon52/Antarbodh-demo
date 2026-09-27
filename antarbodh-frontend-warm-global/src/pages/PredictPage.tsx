@@ -9,18 +9,33 @@ import { Waves } from 'lucide-react';
 import { Panel } from '../components/ui/Panel';
 import { Button } from '../components/ui/Button';
 
-import { SectionHeading } from '../components/ui/SectionHeading';
 import { PredictionMap } from '../components/predict/PredictionMap';
-import { PredictionProfilePanel } from '../components/predict/PredictionProfilePanel';
+import { PredictionResult } from '../components/predict/PredictionResult';
 
 import { api } from '../api/endpoints';
 
 import type {
   AvailabilityResponse,
-  ProfileResponse,
+  PredictionProfileResponse,
 } from '../types/api';
 
 import { DOMAIN } from '../lib/constants';
+import { formatDay } from '../lib/seasons';
+
+import '../styles/predict.css';
+
+
+// Readable names for the backend's input channel keys.
+// u is the eastward component, v the northward.
+const CHANNEL_NAMES: Record<string, string> = {
+  sst: 'Sea surface temperature',
+  sss: 'Sea surface salinity',
+  ssh: 'Sea surface height',
+  current_u: 'Current, eastward',
+  current_v: 'Current, northward',
+  wind_u: 'Wind, eastward',
+  wind_v: 'Wind, northward',
+};
 
 
 type PredictionStage =
@@ -51,7 +66,7 @@ export function PredictPage() {
     );
 
   const [profile, setProfile] =
-    useState<ProfileResponse | null>(
+    useState<PredictionProfileResponse | null>(
       null,
     );
 
@@ -254,18 +269,7 @@ export function PredictPage() {
   // Date display
   // ---------------------------------------------------------
 
-  const formattedDate =
-    new Date(
-      `${date}T00:00:00Z`,
-    ).toLocaleDateString(
-      'en-GB',
-      {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      },
-    ).toUpperCase();
+  const formattedDate = formatDay(date);
 
 
   // ---------------------------------------------------------
@@ -285,34 +289,26 @@ export function PredictPage() {
       <div className="predict-page-header">
 
         <div>
-          <div
-            className="label-scientific"
-            style={{ marginBottom: 'var(--space-2)' }}
-          >
-            On-demand inference
-          </div>
+          <p className="kicker" lang="hi">पूर्वानुमान</p>
 
-          <h1>
-            Subsurface reconstruction
+          <h1 className="page-title">
+            Reconstruct a profile
           </h1>
 
-          <div className="predict-page-subtitle">
-            Generate a vertical temperature profile from
-            surface observations alone — no reanalysis or
-            in-situ data enters the model at inference time.
-          </div>
+          <p className="page-lede">
+            Generate a vertical temperature profile from surface
+            observations alone. No reanalysis or in-situ data enters
+            the model when it runs.
+          </p>
         </div>
 
         <div className="predict-header-meta">
-          <span className="label-scientific" style={{ fontSize: '0.5625rem' }}>
+          <span className="label-scientific">
             Domain
           </span>
 
-          <span
-            className="data-numeric"
-            style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}
-          >
-            {DOMAIN.LAT_MIN}–{DOMAIN.LAT_MAX}°N · {DOMAIN.LON_MIN}–{DOMAIN.LON_MAX}°E
+          <span className="data-numeric">
+            {DOMAIN.LAT_MIN}–{DOMAIN.LAT_MAX}°N, {DOMAIN.LON_MIN}–{DOMAIN.LON_MAX}°E
           </span>
         </div>
 
@@ -331,11 +327,9 @@ export function PredictPage() {
           className="predict-request-panel"
         >
 
-          <SectionHeading
-            index="01"
-            title="Observation request"
-            style={{ marginBottom: 'var(--space-5)' }}
-          />
+          <h2 className="block-title">
+            Choose a day and a point
+          </h2>
 
 
           {/* -------------------------------------------------
@@ -345,12 +339,14 @@ export function PredictPage() {
           <div className="predict-field">
 
             <label
+              htmlFor="predict-date"
               className="label-scientific"
             >
-              DATE
+              Date
             </label>
 
             <input
+              id="predict-date"
               type="date"
               min="2025-01-01"
               max="2025-12-31"
@@ -376,12 +372,14 @@ export function PredictPage() {
             <div className="predict-field">
 
               <label
+                htmlFor="predict-lat"
                 className="label-scientific"
               >
-                LATITUDE
+                Latitude (°N)
               </label>
 
               <input
+                id="predict-lat"
                 type="number"
                 step="0.01"
                 min={DOMAIN.LAT_MIN}
@@ -408,12 +406,14 @@ export function PredictPage() {
             <div className="predict-field">
 
               <label
+                htmlFor="predict-lon"
                 className="label-scientific"
               >
-                LONGITUDE
+                Longitude (°E)
               </label>
 
               <input
+                id="predict-lon"
                 type="number"
                 step="0.01"
                 min={DOMAIN.LON_MIN}
@@ -446,8 +446,9 @@ export function PredictPage() {
               <div
                 className="predict-validation-error"
               >
-                Location outside ANTARBODH
-                prototype domain.
+                This point is outside the prototype domain
+                ({DOMAIN.LAT_MIN}–{DOMAIN.LAT_MAX}°N,{' '}
+                {DOMAIN.LON_MIN}–{DOMAIN.LON_MAX}°E).
               </div>
 
             )}
@@ -458,8 +459,7 @@ export function PredictPage() {
             <div
               className="predict-validation-error"
             >
-              ANTARBODH v1 inference is currently
-              limited to 2025.
+              Antarbodh v1 can reconstruct dates in 2025 only.
             </div>
 
           )}
@@ -514,7 +514,7 @@ export function PredictPage() {
                 }}
               >
                 <span className="label-scientific label-scientific--bright">
-                  Surface observation status
+                  Surface observations
                 </span>
 
                 <span
@@ -554,12 +554,8 @@ export function PredictPage() {
                     >
 
                       <span>
-                        {channel
-                          .replace(
-                            '_',
-                            ' ',
-                          )
-                          .toUpperCase()}
+                        {CHANNEL_NAMES[channel] ??
+                          channel.replace('_', ' ')}
                       </span>
 
                       <span
@@ -570,8 +566,8 @@ export function PredictPage() {
                         }
                       >
                         {status.available
-                          ? '✓ AVAILABLE'
-                          : '✕ UNAVAILABLE'}
+                          ? '✓ Available'
+                          : '✕ Missing'}
                       </span>
 
                     </div>
@@ -596,9 +592,9 @@ export function PredictPage() {
                   <div
                     className="predict-observation-note"
                   >
-                    A permitted input is missing.
-                    ANTARBODH will use its trained
-                    missingness representation.
+                    A permitted input is missing. Antarbodh will use
+                    the missingness representation it learned in
+                    training.
                   </div>
 
                 )}
@@ -657,16 +653,16 @@ export function PredictPage() {
             className="predict-policy-note"
           >
             <strong>
-              V1 inference window
+              Inference window
             </strong>
 
             <span>
-              01 JAN — 31 DEC 2025
+              1 Jan to 31 Dec 2025
             </span>
 
             <span>
-              No GLORYS, ARGO or climatology
-              fallback is used during inference.
+              No GLORYS, Argo or climatology fallback is used
+              when the model runs.
             </span>
           </div>
 
@@ -925,129 +921,10 @@ export function PredictPage() {
           {stage === 'complete' &&
             profile && (
 
-              <div
-                className="predict-result"
-              >
-
-                <div
-                  className="predict-result-header"
-                >
-
-                  <div>
-
-                    <div
-                      className="label-scientific"
-                    >
-                      Antarbodh reconstruction
-                    </div>
-
-                    <h2>
-                      Subsurface temperature profile
-                    </h2>
-
-                    <div
-                      className="predict-result-location"
-                    >
-                      {profile.latitude.toFixed(2)}
-                      °N
-                      {' · '}
-                      {profile.longitude.toFixed(2)}
-                      °E
-                    </div>
-
-                  </div>
-
-
-                  <div
-                    className="predict-result-date"
-                  >
-                    {formattedDate}
-                  </div>
-
-                </div>
-
-
-                <div
-                  className="predict-result-meta"
-                >
-
-                  <div>
-                    <span>
-                      MODEL
-                    </span>
-
-                    <strong>
-                      ANTARBODH CNN V1
-                    </strong>
-                  </div>
-
-
-                  <div>
-                    <span>
-                      INPUT
-                    </span>
-
-                    <strong>
-                      SURFACE OBSERVATIONS
-                    </strong>
-                  </div>
-
-
-                  <div>
-                    <span>
-                      OUTPUT
-                    </span>
-
-                    <strong>
-                      15 DEPTH LEVELS
-                    </strong>
-                  </div>
-
-                </div>
-
-
-                <div
-                  className="predict-profile-container"
-                >
-                  <PredictionProfilePanel
-                    profile={profile}
-                  />
-                </div>
-
-
-                <div
-                  className="predict-provenance"
-                >
-
-                  <div
-                    className="label-scientific"
-                    style={{ marginBottom: 'var(--space-2)' }}
-                  >
-                    Provenance
-                  </div>
-
-                  <div className="provenance-process">
-                    <span>Surface observations</span>
-                    <span className="provenance-separator">/</span>
-                    <span>ANTARBODH CNN v1</span>
-                    <span className="provenance-separator">/</span>
-                    <span>Subsurface reconstruction</span>
-                  </div>
-
-                  <div>
-                    GLORYS is used as the training/
-                    reference target, not as an
-                    inference fallback.
-                  </div>
-
-                  <div>
-                    ARGO observations are independent
-                    validation data, not model inputs.
-                  </div>
-
-                </div>
-
-              </div>
+              <PredictionResult
+                profile={profile}
+                formattedDate={formattedDate}
+              />
 
             )}
 

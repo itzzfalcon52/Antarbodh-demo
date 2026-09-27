@@ -22,7 +22,7 @@ export function PredictionMap({ lat, lon, onLocationChange }: PredictionMapProps
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: '/assets/ocean-style.json',
+      style: '/assets/ocean-style-neel.json',
       center: [90, 12.5],
       zoom: 3.5,
       maxBounds: [
@@ -59,18 +59,18 @@ export function PredictionMap({ lat, lon, onLocationChange }: PredictionMapProps
         type: 'fill',
         source: 'domain',
         paint: {
-          'fill-color': '#23C4B8',
+          'fill-color': '#F4B41A',
           'fill-opacity': 0.05
         }
       });
-      
+
       map.current.addLayer({
         id: 'domain-border',
         type: 'line',
         source: 'domain',
         paint: {
-          'line-color': '#23C4B8',
-          'line-width': 1,
+          'line-color': '#F4B41A',
+          'line-width': 1.2,
           'line-dasharray': [4, 4]
         }
       });
@@ -81,15 +81,30 @@ export function PredictionMap({ lat, lon, onLocationChange }: PredictionMapProps
         data: { type: 'FeatureCollection', features: [] }
       });
 
+      // Same saffron marker and halo as the Explore map.
+      map.current.addLayer({
+        id: 'marker-halo',
+        type: 'circle',
+        source: 'marker',
+        paint: {
+          'circle-radius': 15,
+          'circle-color': '#F4B41A',
+          'circle-opacity': 0.18,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#F4B41A',
+          'circle-stroke-opacity': 0.55
+        }
+      });
+
       map.current.addLayer({
         id: 'marker-point',
         type: 'circle',
         source: 'marker',
         paint: {
           'circle-radius': 6,
-          'circle-color': '#fdae61',
+          'circle-color': '#EE8A1E',
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#05142B'
+          'circle-stroke-color': '#FFFFFF'
         }
       });
 
@@ -182,7 +197,7 @@ export function PredictionMap({ lat, lon, onLocationChange }: PredictionMapProps
             color: 'var(--color-text-muted)',
           }}
         >
-          Domain 5–20°N · 80–100°E
+          Domain 5–20°N, 80–100°E
         </div>
       </div>
     </div>

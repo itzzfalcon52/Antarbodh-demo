@@ -1,0 +1,224 @@
+/* =========================================================
+   PREDICT
+   Page styles on top of the shared neel theme. The result
+   panel's own styles live in predict-result.css.
+   ========================================================= */
+
+[data-theme='neel'] .predict-page {
+  padding: var(--space-5) var(--space-5) var(--space-5);
+}
+
+[data-theme='neel'] .predict-page-header {
+  align-items: flex-end;
+  padding-bottom: var(--space-5);
+  border-bottom-color: var(--color-border-faint);
+}
+
+[data-theme='neel'] .predict-page-header .page-title {
+  font-size: clamp(1.9rem, 1.3rem + 1.8vw, 2.8rem);
+}
+
+[data-theme='neel'] .predict-page-header .page-lede {
+  margin-top: 8px;
+  font-size: 1rem;
+}
+
+[data-theme='neel'] .predict-header-meta {
+  gap: 2px;
+  padding-left: var(--space-5);
+  border-left-color: var(--color-border-faint);
+}
+
+[data-theme='neel'] .predict-header-meta .data-numeric {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* Panels */
+
+[data-theme='neel'] .predict-request-panel,
+[data-theme='neel'] .predict-result-panel {
+  padding: 22px 24px;
+}
+
+[data-theme='neel'] .predict-request-panel .block-title,
+[data-theme='neel'] .predict-result-panel .block-title {
+  font-size: 1.25rem;
+}
+
+/* Fields */
+
+[data-theme='neel'] .predict-field {
+  gap: 6px;
+}
+
+[data-theme='neel'] .predict-field label {
+  color: var(--color-text-subtle);
+}
+
+[data-theme='neel'] .predict-field input {
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(6, 10, 34, 0.45);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color-scheme: dark;
+}
+
+[data-theme='neel'] .predict-field input:hover {
+  border-color: var(--color-border-strong);
+}
+
+[data-theme='neel'] .predict-field input:focus {
+  border-color: var(--l-haldi);
+  background: rgba(6, 10, 34, 0.6);
+  box-shadow: 0 0 0 3px rgba(244, 180, 26, 0.2);
+}
+
+[data-theme='neel'] .predict-validation-error {
+  margin-top: -8px;
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}
+
+[data-theme='neel'] .predict-map-wrapper {
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+}
+
+[data-theme='neel'] .prediction-map-frame {
+  border-radius: 16px !important;
+}
+
+/* Observation status */
+
+[data-theme='neel'] .predict-observation-card {
+  padding: 16px 18px;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 16px;
+  background: rgba(6, 10, 34, 0.4);
+}
+
+[data-theme='neel'] .predict-observation-card::before {
+  width: 3px;
+}
+
+[data-theme='neel'] .predict-observation-card .badge {
+  text-transform: capitalize;
+}
+
+[data-theme='neel'] .predict-input-row {
+  padding: 6px 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+[data-theme='neel'] .predict-input-row .input-available,
+[data-theme='neel'] .predict-input-row .input-missing {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+[data-theme='neel'] .predict-observation-message,
+[data-theme='neel'] .predict-observation-note {
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+/* Actions and note */
+
+[data-theme='neel'] .predict-actions .btn {
+  min-height: 46px;
+  font-size: 1rem;
+}
+
+[data-theme='neel'] .predict-policy-note {
+  color: var(--color-text-faint);
+  font-size: 0.85rem;
+}
+
+[data-theme='neel'] .predict-policy-note strong {
+  color: var(--color-text-subtle);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Result panel states */
+
+[data-theme='neel'] .predict-state-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+[data-theme='neel'] .predict-state-description {
+  font-size: 0.95rem;
+}
+
+[data-theme='neel'] .predict-ready-mark,
+[data-theme='neel'] .predict-warning-mark,
+[data-theme='neel'] .predict-error-mark {
+  width: 52px;
+  height: 52px;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+}
+
+[data-theme='neel'] .predict-progress-list {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  gap: 8px;
+}
+
+[data-theme='neel'] .predict-error-message {
+  border-radius: 14px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+/* Result: the readings use the display face on this theme. */
+
+[data-theme='neel'] .pr-reading {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+[data-theme='neel'] .pr-readings {
+  border-radius: 16px;
+}
+
+[data-theme='neel'] .pr-readings > div {
+  background: rgba(6, 10, 34, 0.4);
+}
+
+[data-theme='neel'] .pr-readings dt,
+[data-theme='neel'] .pr-table thead th,
+[data-theme='neel'] .pr-table__group th {
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+
+[data-theme='neel'] .pr-table tbody th[scope='row'],
+[data-theme='neel'] .pr-table tbody td.is-num {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+[data-theme='neel'] .pr-place {
+  font-weight: 600;
+}
+
+[data-theme='neel'] .pr-meta .data-numeric {
+  font-family: var(--font-sans);
+}

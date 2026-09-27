@@ -1,521 +1,240 @@
-import type {
-  ValidationDepthMetrics,
-} from '../../types/api';
+import {
+  useCallback,
+  useState,
+  type PointerEvent,
+} from 'react';
 
+import type { ValidationDepthMetrics } from '../../types/api';
+import { DEPTH_AXIS_TICKS, depthFraction } from '../../lib/depthScale';
 
 interface ValidationChartsProps {
   metrics: ValidationDepthMetrics[];
+  activeDepth: number | null;
+  onActiveDepthChange: (depth: number | null) => void;
 }
 
-
-const DEPTHS = [
-  0,
-  5,
-  10,
-  20,
-  30,
-  50,
-  75,
-  100,
-  125,
-  150,
-  200,
-  300,
-  500,
-  700,
-  1000,
-];
-
-
-function depthY(depth: number): number {
-
-  if (depth <= 200) {
-    return (
-      (depth / 200) * 40
-    );
-  }
-
-  return (
-    40 +
-    ((depth - 200) / 800) * 60
-  );
-}
-
-
-function clamp(
-  value: number,
-  min: number,
-  max: number,
-): number {
-
-  return Math.max(
-    min,
-    Math.min(max, value)
-  );
-}
-
-
-function MetricChart({
-  title,
-  subtitle,
-  metrics,
-  getA,
-  getG,
-  min,
-  max,
-  zero = false,
-  unit = '',
-}: {
+interface ChartSpec {
   title: string;
-  subtitle: string;
-  metrics: ValidationDepthMetrics[];
+  hint: string;
   getA: (m: ValidationDepthMetrics) => number;
   getG: (m: ValidationDepthMetrics) => number;
   min: number;
   max: number;
+  ticks: number[];
+  digits: number;
   zero?: boolean;
-  unit?: string;
+}
+
+// Axis ranges are fixed so the four panels read consistently; every
+// per-depth value in the current report falls inside them.
+const CHARTS: ChartSpec[] = [
+  {
+    title: 'RMSE',
+    hint: 'Root-mean-square error, °C. Lower is better.',
+    getA: (m) => m.antarbodh_rmse,
+    getG: (m) => m.glorys_rmse,
+    min: 0,
+    max: 1.6,
+    ticks: [0, 0.4, 0.8, 1.2, 1.6],
+    digits: 2,
+  },
+  {
+    title: 'MAE',
+    hint: 'Mean absolute error, °C. Lower is better.',
+    getA: (m) => m.antarbodh_mae,
+    getG: (m) => m.glorys_mae,
+    min: 0,
+    max: 1.4,
+    ticks: [0, 0.35, 0.7, 1.05, 1.4],
+    digits: 2,
+  },
+  {
+    title: 'Bias',
+    hint: 'Mean signed error, °C. Closer to zero is better.',
+    getA: (m) => m.antarbodh_bias,
+    getG: (m) => m.glorys_bias,
+    min: -0.8,
+    max: 0.8,
+    ticks: [-0.8, -0.4, 0, 0.4, 0.8],
+    digits: 2,
+    zero: true,
+  },
+  {
+    title: 'Correlation',
+    hint: 'Pearson correlation with Argo. Higher is better.',
+    getA: (m) => m.antarbodh_corr,
+    getG: (m) => m.glorys_corr,
+    min: 0,
+    max: 1,
+    ticks: [0, 0.25, 0.5, 0.75, 1],
+    digits: 3,
+  },
+];
+
+const H = 300;
+const PAD = { top: 16, right: 16, bottom: 30, left: 46 };
+
+function MetricChart({
+  spec,
+  metrics,
+  activeDepth,
+  onActiveDepthChange,
+}: {
+  spec: ChartSpec;
+  metrics: ValidationDepthMetrics[];
+  activeDepth: number | null;
+  onActiveDepthChange: (depth: number | null) => void;
 }) {
+  const [width, setWidth] = useState(480);
 
-  const range = max - min;
+  // Drawn at the measured pixel width so points stay round and text
+  // stays at its real size (the old chart stretched a 100×100 box).
+  const frame = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    setWidth(Math.round(node.getBoundingClientRect().width));
 
-  const x = (value: number) => {
+    const observer = new ResizeObserver(([entry]) => {
+      setWidth(Math.round(entry.contentRect.width));
+    });
 
-    if (!Number.isFinite(value)) {
-      return 0;
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const W = Math.max(260, width);
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  const x = (v: number) =>
+    PAD.left + ((Math.min(spec.max, Math.max(spec.min, v)) - spec.min) / (spec.max - spec.min)) * plotW;
+  const y = (depth: number) => PAD.top + depthFraction(depth) * plotH;
+
+  const series = (get: (m: ValidationDepthMetrics) => number) =>
+    metrics
+      .filter((m) => Number.isFinite(get(m)))
+      .map((m, i) => `${i ? 'L' : 'M'}${x(get(m)).toFixed(1)} ${y(m.depth).toFixed(1)}`)
+      .join(' ');
+
+  const active = metrics.find((m) => m.depth === activeDepth) ?? null;
+
+  const handlePointer = (event: PointerEvent<SVGRectElement>) => {
+    const box = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
+    if (!box || metrics.length === 0) return;
+
+    const py = ((event.clientY - box.top) / box.height) * H;
+    let nearest = metrics[0];
+    for (const m of metrics) {
+      if (Math.abs(y(m.depth) - py) < Math.abs(y(nearest.depth) - py)) nearest = m;
     }
-
-    return clamp(
-      ((value - min) / range) * 100,
-      0,
-      100,
-    );
+    onActiveDepthChange(nearest.depth);
   };
 
-
-  const pointsA = metrics
-    .map((metric) => {
-      const value = getA(metric);
-
-      if (!Number.isFinite(value)) {
-        return null;
-      }
-
-      return `${x(value)},${depthY(metric.depth)}`;
-    })
-    .filter(Boolean)
-    .join(' ');
-
-
-  const pointsG = metrics
-    .map((metric) => {
-      const value = getG(metric);
-
-      if (!Number.isFinite(value)) {
-        return null;
-      }
-
-      return `${x(value)},${depthY(metric.depth)}`;
-    })
-    .filter(Boolean)
-    .join(' ');
-
-
-  const zeroX = x(0);
-
-
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: 0,
-      }}
-    >
+    <figure className="va-chart">
+      <figcaption>
+        <span className="va-chart__title">{spec.title}</span>
+        <span className="va-chart__hint">{spec.hint}</span>
+      </figcaption>
 
-      <div
-        className="label-scientific"
-        style={{
-          marginBottom:
-            'var(--space-1)',
-        }}
-      >
-        {title}
-      </div>
-
-      <div
-        style={{
-          fontSize: '0.7rem',
-          color:
-            'var(--color-text-subtle)',
-          marginBottom:
-            'var(--space-3)',
-        }}
-      >
-        {subtitle}
-        {unit ? ` · ${unit}` : ''}
-      </div>
-
-
-      <div
-        style={{
-          position: 'relative',
-          height: '320px',
-          background:
-            'var(--color-abyss)',
-          border:
-            '1px solid var(--color-border-faint)',
-          borderRadius:
-            'var(--radius-md)',
-          overflow: 'hidden',
-          boxShadow:
-            'inset 0 1px 0 var(--sheen-soft)',
-        }}
-      >
-
+      <div ref={frame} className="va-chart__frame">
         <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
+          width={W}
+          height={H}
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-label={`${spec.title} by depth for Antarbodh and GLORYS. Values are listed in the table below.`}
         >
+          {DEPTH_AXIS_TICKS.map((d) => (
+            <g key={d}>
+              <line x1={PAD.left} x2={PAD.left + plotW} y1={y(d)} y2={y(d)} className="va-grid" />
+              <text x={PAD.left - 8} y={y(d) + 3.5} textAnchor="end" className="va-tick">
+                {d}
+              </text>
+            </g>
+          ))}
 
-          {/* Vertical grid */}
+          {spec.ticks.map((t) => (
+            <g key={t}>
+              <line x1={x(t)} x2={x(t)} y1={PAD.top} y2={PAD.top + plotH} className="va-grid va-grid--v" />
+              <text x={x(t)} y={H - 10} textAnchor="middle" className="va-tick">
+                {t}
+              </text>
+            </g>
+          ))}
 
-          {[0, 25, 50, 75, 100].map(
-            (p) => (
-              <line
-                key={`v-${p}`}
-                x1={p}
-                y1="0"
-                x2={p}
-                y2="100"
-                stroke="var(--grid-line)"
-                strokeWidth="0.25"
-                strokeDasharray="1 1"
-              />
-            )
+          {spec.zero && (
+            <line x1={x(0)} x2={x(0)} y1={PAD.top} y2={PAD.top + plotH} className="va-zero" />
           )}
 
+          <text x={PAD.left} y={PAD.top - 5} className="va-axis-title">
+            Depth (m)
+          </text>
 
-          {/* Depth grid */}
-
-          {DEPTHS.map((depth) => {
-
-            const y =
-              depthY(depth);
-
-            return (
-              <line
-                key={`d-${depth}`}
-                x1="0"
-                y1={y}
-                x2="100"
-                y2={y}
-                stroke="var(--grid-line-faint)"
-                strokeWidth="0.25"
-              />
-            );
-          })}
-
-
-          {/* Zero line */}
-
-          {zero && (
+          {active && (
             <line
-              x1={zeroX}
-              y1="0"
-              x2={zeroX}
-              y2="100"
-              stroke="var(--axis-line)"
-              strokeWidth="0.35"
+              x1={PAD.left}
+              x2={PAD.left + plotW}
+              y1={y(active.depth)}
+              y2={y(active.depth)}
+              className="va-active-row"
             />
           )}
 
+          <path d={series(spec.getG)} className="va-line va-line--g" />
+          <path d={series(spec.getA)} className="va-line va-line--a" />
 
-          {/* GLORYS */}
+          {metrics.map((m) => (
+            <g key={m.depth}>
+              {Number.isFinite(spec.getG(m)) && (
+                <circle cx={x(spec.getG(m))} cy={y(m.depth)} r={m.depth === activeDepth ? 4.5 : 2.6} className="va-dot va-dot--g" />
+              )}
+              {Number.isFinite(spec.getA(m)) && (
+                <circle cx={x(spec.getA(m))} cy={y(m.depth)} r={m.depth === activeDepth ? 5 : 3} className="va-dot va-dot--a" />
+              )}
+            </g>
+          ))}
 
-          <polyline
-            points={pointsG}
-            fill="none"
-            stroke="var(--color-text-subtle)"
-            strokeWidth="0.7"
-            strokeDasharray="2 2"
-            vectorEffect="non-scaling-stroke"
-          />
-
-
-          {/* ANTARBODH */}
-
-          <polyline
-            points={pointsA}
-            fill="none"
-            stroke="var(--color-teal)"
-            strokeWidth="1.1"
-            vectorEffect="non-scaling-stroke"
-          />
-
-
-          {/* Points */}
-
-          {metrics.map(
-            (metric, index) => {
-
-              const y =
-                depthY(metric.depth);
-
-              const valueA =
-                getA(metric);
-
-              const valueG =
-                getG(metric);
-
-              return (
-                <g
-                  key={`${metric.depth}-${index}`}
-                >
-
-                  {Number.isFinite(
-                    valueG
-                  ) && (
-                      <circle
-                        cx={x(valueG)}
-                        cy={y}
-                        r="1.2"
-                        fill="var(--color-abyss)"
-                        stroke="var(--color-text-subtle)"
-                        strokeWidth="0.7"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    )}
-
-                  {Number.isFinite(
-                    valueA
-                  ) && (
-                      <circle
-                        cx={x(valueA)}
-                        cy={y}
-                        r="1.5"
-                        fill="var(--color-abyss)"
-                        stroke="var(--color-teal)"
-                        strokeWidth="0.8"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    )}
-
-                </g>
-              );
-            }
+          {active && (
+            <g className="va-bubble" transform={`translate(${PAD.left + plotW - 4} ${Math.max(PAD.top + 14, y(active.depth) - 16)})`}>
+              <rect x={-172} y={-12} width={172} height={24} rx={6} />
+              <text x={-86} y={4} textAnchor="middle">
+                {active.depth} m · A {spec.getA(active).toFixed(spec.digits)} · G {spec.getG(active).toFixed(spec.digits)}
+              </text>
+            </g>
           )}
 
+          <rect
+            x={PAD.left}
+            y={PAD.top}
+            width={plotW}
+            height={plotH}
+            fill="transparent"
+            onPointerMove={handlePointer}
+            onPointerDown={handlePointer}
+            onPointerLeave={() => onActiveDepthChange(null)}
+          />
         </svg>
-
-
-        {/* Depth labels */}
-
-        <div
-          style={{
-            position: 'absolute',
-            left: '6px',
-            top: '0',
-            bottom: '0',
-            pointerEvents: 'none',
-          }}
-        >
-
-          {[0, 100, 500, 1000].map(
-            (depth) => (
-
-              <span
-                key={depth}
-                style={{
-                  position: 'absolute',
-                  top:
-                    `${depthY(depth)}%`,
-                  transform:
-                    'translateY(-50%)',
-                  fontFamily:
-                    'var(--font-mono)',
-                  fontSize:
-                    '0.58rem',
-                  color:
-                    'var(--color-text-faint)',
-                  background:
-                    'var(--scrim-chip)',
-                  padding:
-                    '1px 4px',
-                  borderRadius: '2px',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                {depth}m
-              </span>
-
-            )
-          )}
-
-        </div>
-
-
-        {/* Scale labels */}
-
-        <div
-          style={{
-            position: 'absolute',
-            left: '0',
-            right: '0',
-            bottom: '5px',
-            display: 'flex',
-            justifyContent:
-              'space-between',
-            padding:
-              '0 6px',
-            pointerEvents: 'none',
-          }}
-        >
-
-          <span
-            style={{
-              fontFamily:
-                'var(--font-mono)',
-              fontSize:
-                '0.58rem',
-              color:
-                'var(--color-text-faint)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {min.toFixed(
-              min === -1 ? 1 : 2
-            )}
-          </span>
-
-          <span
-            style={{
-              fontFamily:
-                'var(--font-mono)',
-              fontSize:
-                '0.58rem',
-              color:
-                'var(--color-text-faint)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {((min + max) / 2).toFixed(
-              min === -1 ? 1 : 2
-            )}
-          </span>
-
-          <span
-            style={{
-              fontFamily:
-                'var(--font-mono)',
-              fontSize:
-                '0.58rem',
-              color:
-                'var(--color-text-faint)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {max.toFixed(
-              min === -1 ? 1 : 2
-            )}
-          </span>
-
-        </div>
-
       </div>
-
-    </div>
+    </figure>
   );
 }
 
-
 export function ValidationCharts({
   metrics,
+  activeDepth,
+  onActiveDepthChange,
 }: ValidationChartsProps) {
-
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns:
-          'repeat(2, minmax(0, 1fr))',
-        gap: 'var(--space-6)',
-      }}
-    >
-
-      {/* RMSE */}
-
-      <MetricChart
-        title="RMSE BY DEPTH"
-        subtitle="Absolute reconstruction error"
-        metrics={metrics}
-        getA={(m) =>
-          m.antarbodh_rmse
-        }
-        getG={(m) =>
-          m.glorys_rmse
-        }
-        min={0}
-        max={1.6}
-        unit="°C"
-      />
-
-
-      {/* MAE */}
-
-      <MetricChart
-        title="MAE BY DEPTH"
-        subtitle="Mean absolute error"
-        metrics={metrics}
-        getA={(m) =>
-          m.antarbodh_mae
-        }
-        getG={(m) =>
-          m.glorys_mae
-        }
-        min={0}
-        max={1.4}
-        unit="°C"
-      />
-
-
-      {/* BIAS */}
-
-      <MetricChart
-        title="BIAS BY DEPTH"
-        subtitle="Signed reconstruction error"
-        metrics={metrics}
-        getA={(m) =>
-          m.antarbodh_bias
-        }
-        getG={(m) =>
-          m.glorys_bias
-        }
-        min={-0.8}
-        max={0.8}
-        zero
-        unit="°C"
-      />
-
-
-      {/* CORRELATION */}
-
-      <MetricChart
-        title="CORRELATION BY DEPTH"
-        subtitle="Pearson correlation with ARGO"
-        metrics={metrics}
-        getA={(m) =>
-          m.antarbodh_corr
-        }
-        getG={(m) =>
-          m.glorys_corr
-        }
-        min={0}
-        max={1}
-      />
-
+    <div className="va-charts">
+      {CHARTS.map((spec) => (
+        <MetricChart
+          key={spec.title}
+          spec={spec}
+          metrics={metrics}
+          activeDepth={activeDepth}
+          onActiveDepthChange={onActiveDepthChange}
+        />
+      ))}
     </div>
   );
 }

@@ -1,8 +1,41 @@
+import { useEffect, useRef } from 'react';
+
 import {
   UPPER_OCEAN,
   THERMOCLINE,
   DEEP_OCEAN,
 } from '../../lib/constants';
+
+/**
+ * Brings the selected stop into view inside the rail's own scroll
+ * container (vertical on desktop, horizontal chips on phones). It
+ * never scrolls the page, so changing depth from the profile chart
+ * does not jump the reader back up to the rail.
+ */
+function revealInScroller(stop: HTMLElement) {
+  for (let el = stop.parentElement; el && el !== document.body; el = el.parentElement) {
+    const style = getComputedStyle(el);
+    const scrollsY = /(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight;
+    const scrollsX = /(auto|scroll)/.test(style.overflowX) && el.scrollWidth > el.clientWidth;
+    if (!scrollsY && !scrollsX) continue;
+
+    const box = el.getBoundingClientRect();
+    const item = stop.getBoundingClientRect();
+    const pad = 8;
+
+    if (scrollsY) {
+      if (item.top < box.top) el.scrollTop -= box.top - item.top + pad;
+      else if (item.bottom > box.bottom) el.scrollTop += item.bottom - box.bottom + pad;
+    }
+
+    if (scrollsX) {
+      if (item.left < box.left) el.scrollLeft -= box.left - item.left + pad;
+      else if (item.right > box.right) el.scrollLeft += item.right - box.right + pad;
+    }
+
+    return;
+  }
+}
 
 interface DepthSelectorProps {
   selectedDepth: number;
@@ -40,8 +73,15 @@ export function DepthSelector({
   selectedDepth,
   onDepthChange,
 }: DepthSelectorProps) {
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const stop = root.current?.querySelector<HTMLElement>('[data-selected="true"]');
+    if (stop) revealInScroller(stop);
+  }, [selectedDepth]);
+
   return (
-    <div className="depth-selector">
+    <div ref={root} className="depth-selector">
       {/* Depth spine — decorative */}
       <div aria-hidden="true" className="depth-spine" />
 

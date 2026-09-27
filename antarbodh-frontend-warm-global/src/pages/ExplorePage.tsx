@@ -11,9 +11,11 @@ import { DateTimeline } from '../components/explore/DateTimeline';
 import { TemperatureLegend } from '../components/explore/TemperatureLegend';
 import { LocationPanel } from '../components/explore/LocationPanel';
 import { MapHoverReadout } from '../components/explore/MapHoverReadout';
-import { SectionHeading } from '../components/ui/SectionHeading';
 
 import { api } from '../api/endpoints';
+import { formatDay, seasonFor } from '../lib/seasons';
+
+import '../styles/explore.css';
 
 import type {
   TemperatureFieldResponse,
@@ -605,20 +607,14 @@ export function ExplorePage() {
         {/* -------------------------------------------- */}
 
         <aside className="explore-depth">
-          <SectionHeading
-            index="01"
-            title="Depth"
-            style={{ marginBottom: 'var(--space-4)' }}
-          />
+          <header className="ex-depth-head">
+            <p className="kicker" lang="hi">
+              गहराई
+            </p>
+            <h2 className="ex-depth-head__title">Depth</h2>
+          </header>
 
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              paddingRight: '2px',
-            }}
-          >
+          <div className="ex-depth-scroll">
             <DepthSelector
               selectedDepth={
                 selectedDepth
@@ -629,16 +625,9 @@ export function ExplorePage() {
             />
           </div>
 
-          <p
-            style={{
-              margin: 'var(--space-4) 0 0',
-              fontSize: '0.625rem',
-              lineHeight: 1.55,
-              color: 'var(--color-text-faint)',
-            }}
-          >
-            Fifteen target depths, from the mixed layer
-            through the thermocline to 1000 m.
+          <p className="ex-depth-note">
+            Fifteen standard depths, from the surface through the
+            thermocline to 1,000 m.
           </p>
         </aside>
 
@@ -665,64 +654,24 @@ export function ExplorePage() {
 
 
           {/* Title */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 'var(--space-5)',
-              left: 'var(--space-5)',
-              zIndex: 3,
-              pointerEvents: 'none',
-              maxWidth: '58%',
-            }}
-          >
-            <div
-              className="label-scientific"
-              style={{
-                fontSize: '0.5625rem',
-                color: 'var(--color-text-muted)',
-                textShadow: 'var(--shadow-text)',
-              }}
-            >
-              Reconstructed subsurface field
-            </div>
+          <div className="ex-map-title">
+            <p className="kicker" lang="hi">
+              बंगाल की खाड़ी
+            </p>
 
-            <h2
-              className="display display--sm"
-              style={{
-                margin: '4px 0 0',
-                fontSize: 'clamp(1.5rem, 1.1rem + 1.1vw, 2.1rem)',
-                textShadow: 'var(--shadow-text)',
-              }}
-            >
+            <h1 className="ex-map-title__name">
               Bay of Bengal
-            </h2>
+            </h1>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                marginTop: '6px',
-              }}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  width: '16px',
-                  height: '1px',
-                  backgroundColor: 'var(--color-ocean-bright)',
-                }}
-              />
-
-              <span
-                className="data-numeric"
-                style={{
-                  fontSize: '0.72rem',
-                  color: 'var(--color-ocean-bright)',
-                  textShadow: 'var(--shadow-text)',
-                }}
-              >
+            <div className="ex-map-title__chips">
+              <span className="ex-chip ex-chip--accent">
                 {selectedDepth} m
+              </span>
+              <span className="ex-chip">
+                {formatDay(selectedDate)}
+              </span>
+              <span className="ex-chip">
+                {seasonFor(selectedDate).name}
               </span>
             </div>
           </div>
@@ -745,132 +694,18 @@ export function ExplorePage() {
             )}
 
 
-          {/* Legend stack */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 'var(--space-5)',
-              left: 'var(--space-5)',
-              zIndex: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-2)',
-              alignItems: 'flex-start',
-            }}
-          >
-            {/* Observation legend */}
-            <div
-              className="map-overlay"
-              style={{
-                position: 'relative',
-                padding: 'var(--space-2) var(--space-3)',
-                pointerEvents: 'none',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.625rem',
-                  color: 'var(--color-text-muted)',
-                  marginBottom: '5px',
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: '7px',
-                    height: '7px',
-                    borderRadius: '50%',
-                    backgroundColor:
-                      'var(--color-ocean-bright)',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
-                <strong style={{ fontWeight: 600 }}>ANTARBODH</strong>
-                <span style={{ color: 'var(--color-text-faint)' }}>
-                  reconstructed field
-                </span>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.625rem',
-                  color: 'var(--color-text-muted)',
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: '7px',
-                    height: '7px',
-                    borderRadius: '50%',
-                    border: '1.5px solid var(--color-text)',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
-                <strong style={{ fontWeight: 600 }}>ARGO</strong>
-                <span style={{ color: 'var(--color-text-faint)' }}>
-                  independent observation
-                </span>
-              </div>
-            </div>
-
+          {/* Legend */}
+          <div className="ex-map-legend">
             <TemperatureLegend />
           </div>
 
 
           {/* Loading */}
           {fieldLoading && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: 4,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'var(--scrim-soft)',
-                backdropFilter: 'blur(3px)',
-                WebkitBackdropFilter: 'blur(3px)',
-                pointerEvents: 'none',
-                animation: 'ab-fade var(--transition-fast) both',
-              }}
-            >
-              <div
-                className="map-overlay"
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-3)',
-                  padding: 'var(--space-3) var(--space-5)',
-                  borderRadius: 'var(--radius-full)',
-                }}
-              >
-                <span
-                  className="spinner"
-                  aria-hidden="true"
-                  style={{
-                    display: 'inline-block',
-                    width: '13px',
-                    height: '13px',
-                    borderWidth: '1.5px',
-                  }}
-                />
-
-                <span
-                  className="label-scientific label-scientific--bright"
-                  style={{ fontSize: '0.5875rem' }}
-                >
-                  Loading 2025 field
-                </span>
+            <div className="ex-map-scrim" role="status">
+              <div className="map-overlay ex-loading">
+                <span className="spinner" aria-hidden="true" />
+                Loading the 2025 field at {selectedDepth} m
               </div>
             </div>
           )}
@@ -879,49 +714,16 @@ export function ExplorePage() {
           {/* Error */}
           {fieldError &&
             !fieldLoading && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  zIndex: 4,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'var(--scrim-strong)',
-                  pointerEvents: 'none',
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: '42ch',
-                    padding: 'var(--space-5) var(--space-6)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(255, 107, 107, 0.42)',
-                    borderLeftWidth: '2px',
-                    backgroundColor: 'var(--color-deep)',
-                    boxShadow: 'var(--shadow-lg)',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div
-                    className="label-scientific"
-                    style={{
-                      color: 'var(--color-danger)',
-                      marginBottom: 'var(--space-2)',
-                    }}
-                  >
-                    {fieldError}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: '0.8rem',
-                      lineHeight: 1.6,
-                      color: 'var(--color-text-subtle)',
-                    }}
-                  >
-                    Try selecting a different depth.
-                  </div>
+              <div className="ex-map-scrim ex-map-scrim--strong" role="alert">
+                <div className="ex-error">
+                  <p className="ex-error__title">
+                    The {selectedDepth} m field could not be loaded
+                  </p>
+                  <p className="ex-error__detail">{fieldError}</p>
+                  <p className="ex-error__hint">
+                    Check that the backend is running, or choose a
+                    different depth.
+                  </p>
                 </div>
               </div>
             )}
@@ -942,6 +744,7 @@ export function ExplorePage() {
             argoProfile={argoProfile}
             argoLoading={argoLoading}
             loading={profileLoading}
+            onDepthChange={setSelectedDepth}
           />
         </Panel>
       </div>

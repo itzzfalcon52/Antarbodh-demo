@@ -7,7 +7,11 @@ export function AppShell() {
   const { pathname } = useLocation();
 
   return (
+    // Every app page wears the landing page's deep-water (neel)
+    // theme; see styles/theme-neel.css.
     <div
+      className="app-shell"
+      data-theme="neel"
       style={{
         display: 'flex',
         flexDirection: 'column',
